@@ -68,6 +68,32 @@ textarea {
     line-height: 1.5;
 }
 
+.prompt-textarea {
+    font-size: 13px !important;
+    line-height: 1.6 !important;
+    min-height: 70px;
+    background: rgba(232, 255, 60, 0.03) !important;
+    border-color: rgba(232, 255, 60, 0.15) !important;
+}
+
+.prompt-textarea:focus {
+    background: var(--card) !important;
+}
+
+.prompt-hint {
+    font-size: 11px;
+    color: var(--muted);
+    opacity: 0.7;
+}
+
+.label-hint {
+    font-weight: 400;
+    opacity: 0.6;
+    font-size: 10px;
+    text-transform: none;
+    letter-spacing: 0;
+}
+
 /* Style selector */
 .style-grid {
     display: grid;
@@ -240,5 +266,73 @@ input[type="color"] {
 @keyframes spin {
     to {
         transform: rotate(360deg);
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        padding: 20px 16px;
+        gap: 20px;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+        max-height: none;
+        overflow-y: visible;
+    }
+
+    .section-label {
+        font-size: 10px;
+        margin-bottom: 8px;
+    }
+
+    input[type="text"],
+    textarea,
+    select {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .prompt-textarea {
+        min-height: 60px;
+    }
+
+    .style-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 6px;
+    }
+
+    .style-option {
+        padding: 8px 6px;
+    }
+
+    .style-option .style-icon {
+        font-size: 16px;
+        margin-bottom: 3px;
+    }
+
+    .style-option .style-name {
+        font-size: 10px;
+    }
+
+    .color-chip {
+        width: 32px;
+        height: 32px;
+    }
+
+    input[type="color"] {
+        width: 32px;
+        height: 32px;
+    }
+
+    .count-btn {
+        padding: 8px;
+        font-size: 16px;
+    }
+
+    .btn-generate {
+        padding: 14px 20px;
+        font-size: 14px;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
     }
 }

@@ -1,12 +1,12 @@
-import { LayoutGrid, Sparkles } from 'lucide-react';
+import { LayoutGrid, Sparkles, Check } from 'lucide-react';
 import ThumbnailCard from './ThumbnailCard';
 import PreviewPanel from './PreviewPanel';
 import './ResultsPanel.css';
 
-export default function ResultsPanel({ thumbnails, style, color, uploadedImages, mainTitle }) {
-    // Get the first thumbnail's image source for preview (AI or canvas)
-    const firstThumb = thumbnails.length > 0 ? thumbnails[0] : null;
-    const previewSrc = firstThumb?.aiImageUrl || null;
+export default function ResultsPanel({ thumbnails, style, color, uploadedImages, mainTitle, previewIndex, setPreviewIndex, onCanvasReady }) {
+    // Get the selected thumbnail's image source for preview
+    const selectedThumb = thumbnails.length > 0 ? thumbnails[previewIndex] || thumbnails[0] : null;
+    const previewSrc = selectedThumb?.aiImageUrl || selectedThumb?.canvasDataUrl || null;
 
     return (
         <div className="results-panel">
@@ -33,32 +33,41 @@ export default function ResultsPanel({ thumbnails, style, color, uploadedImages,
                 <>
                     <div className="thumbnails-grid">
                         {thumbnails.map((thumb, i) => (
-                            <ThumbnailCard
+                            <div
                                 key={`${thumb.label}-${i}-${thumb.generationId}`}
-                                title={thumb.title}
-                                subtitle={thumb.subtitle}
-                                tag={thumb.tag}
-                                variant={thumb.variant}
-                                index={i}
-                                style={style}
-                                color={color}
-                                uploadedImages={uploadedImages}
-                                label={thumb.label}
-                                delay={i * 0.1}
-                                aiImageUrl={thumb.aiImageUrl}
-                                isAiGenerating={thumb.isAiGenerating}
-                                aiError={thumb.aiError}
-                                onCanvasReady={(canvasDataUrl) => {
-                                    // Update the thumbnail's canvasDataUrl for preview
-                                    thumb.canvasDataUrl = canvasDataUrl;
-                                }}
-                            />
+                                className={`thumbnail-select-wrapper ${previewIndex === i ? 'preview-active' : ''}`}
+                                onClick={() => setPreviewIndex(i)}
+                            >
+                                {previewIndex === i && (
+                                    <div className="preview-badge">
+                                        <Check size={10} /> Aperçu
+                                    </div>
+                                )}
+                                <ThumbnailCard
+                                    title={thumb.title}
+                                    subtitle={thumb.subtitle}
+                                    tag={thumb.tag}
+                                    variant={thumb.variant}
+                                    index={i}
+                                    style={style}
+                                    color={color}
+                                    uploadedImages={uploadedImages}
+                                    label={thumb.label}
+                                    delay={i * 0.1}
+                                    aiImageUrl={thumb.aiImageUrl}
+                                    isAiGenerating={thumb.isAiGenerating}
+                                    aiError={thumb.aiError}
+                                    onCanvasReady={(canvasDataUrl) => {
+                                        onCanvasReady(i, canvasDataUrl);
+                                    }}
+                                />
+                            </div>
                         ))}
                     </div>
 
                     {/* YouTube Preview Mockups */}
                     <PreviewPanel
-                        thumbnailSrc={previewSrc || thumbnails[0]?.canvasDataUrl || null}
+                        thumbnailSrc={previewSrc}
                         title={mainTitle}
                     />
                 </>

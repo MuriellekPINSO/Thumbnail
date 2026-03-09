@@ -3,3 +3,16 @@
   grid-template-columns: 380px 1fr;
   min-height: calc(100vh - 73px);
 }
+
+@media (max-width: 1024px) {
+  .main {
+    grid-template-columns: 320px 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .main {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}

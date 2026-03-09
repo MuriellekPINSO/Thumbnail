@@ -47,3 +47,21 @@
     color: var(--accent);
     font-weight: 500;
 }
+
+@media (max-width: 768px) {
+    .drop-zone {
+        padding: 20px 16px;
+    }
+
+    .drop-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        margin-bottom: 8px;
+    }
+
+    .drop-text {
+        font-size: 12px;
+        line-height: 1.5;
+    }
+}

@@ -1,5 +1,5 @@
 import { useCallback } from 'react';
-import { Flame, Sparkles, Moon, Zap, Image, Upload, Palette, Hash, Type, AlignLeft, Tag, Wand2 } from 'lucide-react';
+import { Flame, Sparkles, Moon, Zap, Image, Upload, Palette, Hash, Type, AlignLeft, Tag, Wand2, MessageSquare } from 'lucide-react';
 import DropZone from './DropZone';
 import ImagePreviews from './ImagePreviews';
 import './Sidebar.css';
@@ -21,6 +21,7 @@ export default function Sidebar({
     mainTitle, setMainTitle,
     subtitle, setSubtitle,
     tagText, setTagText,
+    customPrompt, setCustomPrompt,
     selectedStyle, setSelectedStyle,
     selectedColor, setSelectedColor,
     selectedCount, setSelectedCount,
@@ -89,6 +90,28 @@ export default function Sidebar({
                             value={tagText}
                             onChange={(e) => setTagText(e.target.value)}
                         />
+                    </div>
+                </div>
+            </div>
+
+            {/* Custom AI Prompt */}
+            <div>
+                <div className="section-label">
+                    <MessageSquare size={12} />
+                    Prompt IA <span className="label-hint">(optionnel)</span>
+                </div>
+                <div className="field-group">
+                    <textarea
+                        id="customPrompt"
+                        className="prompt-textarea"
+                        placeholder="Décris précisément le style de thumbnail que tu veux. Ex: Un fond dégradé violet avec du texte blanc en gras, une personne surprise à droite, des émojis flottants..."
+                        maxLength={500}
+                        rows={3}
+                        value={customPrompt}
+                        onChange={(e) => setCustomPrompt(e.target.value)}
+                    />
+                    <div className="prompt-hint">
+                        {customPrompt.length}/500 — Laisse vide pour un prompt auto-généré
                     </div>
                 </div>
             </div>

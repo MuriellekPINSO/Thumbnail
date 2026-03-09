@@ -107,6 +107,60 @@
     letter-spacing: 0.5px;
 }
 
+.upload-used-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(58, 245, 200, 0.85);
+    color: #0a0a0c;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.3px;
+}
+
+.composite-badge {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: linear-gradient(135deg, rgba(232, 255, 60, 0.9), rgba(58, 245, 200, 0.9));
+    color: #0a0a0c;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 4px 10px;
+    border-radius: 6px;
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    letter-spacing: 0.3px;
+}
+
+.composite-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 10, 12, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 600;
+    backdrop-filter: blur(4px);
+}
+
+.ai-badge.composite {
+    color: #3af5c8;
+    background: rgba(58, 245, 200, 0.1);
+    border-color: rgba(58, 245, 200, 0.2);
+}
+
 .thumbnail-card-footer {
     padding: 16px 20px;
     display: flex;
@@ -159,4 +213,60 @@
 
 .btn-small.primary:hover {
     box-shadow: 0 4px 12px rgba(232, 255, 60, 0.3);
+}
+
+@media (max-width: 768px) {
+    .thumbnail-card {
+        border-radius: 12px;
+    }
+
+    .thumbnail-card-footer {
+        padding: 12px 14px;
+    }
+
+    .thumbnail-label {
+        font-size: 11px;
+        letter-spacing: 0.5px;
+    }
+
+    .card-actions {
+        gap: 6px;
+    }
+
+    .btn-small {
+        padding: 6px 12px;
+        font-size: 11px;
+    }
+
+    .ai-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+    }
+
+    .ai-error-badge,
+    .upload-used-badge,
+    .composite-badge {
+        font-size: 9px;
+        padding: 3px 8px;
+        bottom: 8px;
+    }
+
+    .ai-error-badge {
+        left: 8px;
+    }
+
+    .upload-used-badge,
+    .composite-badge {
+        right: 8px;
+    }
+
+    .ai-generating-overlay p {
+        font-size: 12px;
+    }
+
+    .ai-spinner {
+        width: 44px;
+        height: 44px;
+        border-radius: 12px;
+    }
 }

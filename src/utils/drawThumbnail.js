@@ -286,6 +286,112 @@ export function drawThumbnail(canvas, { title, subtitle, tag, variant, index, st
     drawFn(ctx, W, H, accent, accentRGB, title, subtitle, tag, variant, index, uploadedImages);
 }
 
+// ─── COMPOSITE: AI IMAGE + UPLOADED PHOTOS ──────────────────────────────────
+
+export function compositeWithUploads(canvas, aiImageUrl, uploadedImages, variant, index) {
+    return new Promise((resolve, reject) => {
+        const ctx = canvas.getContext('2d');
+        const W = canvas.width, H = canvas.height;
+
+        const aiImg = new Image();
+        aiImg.crossOrigin = 'anonymous';
+        aiImg.src = aiImageUrl;
+
+        aiImg.onload = () => {
+            // 1. Draw AI-generated image as full background
+            ctx.clearRect(0, 0, W, H);
+            ctx.drawImage(aiImg, 0, 0, W, H);
+
+            if (!uploadedImages || uploadedImages.length === 0) {
+                resolve(canvas.toDataURL('image/png'));
+                return;
+            }
+
+            const userImg = uploadedImages[index % uploadedImages.length].img;
+
+            // 2. Position based on variant
+            if (variant === 'left-image') {
+                // Left 45% — photo with soft right-edge fade
+                const imgW = W * 0.45, imgH = H;
+                const imgX = 0, imgY = 0;
+
+                ctx.save();
+                drawImageFit(ctx, userImg, imgX, imgY, imgW, imgH);
+
+                // Soft edge on the right side to blend into AI design
+                const grad = ctx.createLinearGradient(imgX + imgW * 0.65, 0, imgX + imgW, 0);
+                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                grad.addColorStop(1, 'rgba(14,14,18,1)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(imgX, imgY, imgW, imgH);
+                ctx.restore();
+
+            } else if (variant === 'split') {
+                // Right 45% — photo with soft left-edge fade
+                const imgW = W * 0.45, imgH = H;
+                const imgX = W * 0.55, imgY = 0;
+
+                ctx.save();
+                drawImageFit(ctx, userImg, imgX, imgY, imgW, imgH);
+
+                // Soft edge on the left side
+                const grad = ctx.createLinearGradient(imgX + imgW * 0.35, 0, imgX, 0);
+                grad.addColorStop(0, 'rgba(0,0,0,0)');
+                grad.addColorStop(1, 'rgba(14,14,18,1)');
+                ctx.fillStyle = grad;
+                ctx.fillRect(imgX, imgY, imgW, imgH);
+                ctx.restore();
+
+            } else {
+                // Centered — circular portrait cutout
+                const size = H * 0.7;
+                const cx = W * 0.18;
+                const cy = H * 0.45;
+                const radius = size / 2;
+
+                ctx.save();
+
+                // Shadow behind the circle
+                ctx.shadowColor = 'rgba(0,0,0,0.6)';
+                ctx.shadowBlur = 35;
+                ctx.shadowOffsetX = 4;
+                ctx.shadowOffsetY = 4;
+                ctx.fillStyle = 'rgba(0,0,0,0.01)';
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius + 4, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.shadowBlur = 0;
+                ctx.shadowOffsetX = 0;
+                ctx.shadowOffsetY = 0;
+
+                // Circular clip for image
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.clip();
+                drawImageFit(ctx, userImg, cx - radius, cy - radius, size, size);
+                ctx.restore();
+
+                // Thin border ring
+                ctx.save();
+                ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                ctx.restore();
+            }
+
+            try {
+                resolve(canvas.toDataURL('image/png'));
+            } catch (e) {
+                reject(e);
+            }
+        };
+
+        aiImg.onerror = () => reject(new Error('Impossible de charger l\'image IA'));
+    });
+}
+
 export function downloadCanvas(canvas, title, label) {
     const link = document.createElement('a');
     link.download = `${title.replace(/\s+/g, '-').toLowerCase()}-${label.replace(/\s+/g, '-')}.png`;

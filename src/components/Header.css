@@ -28,3 +28,18 @@
     letter-spacing: 0.5px;
     text-transform: uppercase;
 }
+
+@media (max-width: 768px) {
+    .header {
+        padding: 16px 20px;
+    }
+
+    .logo {
+        font-size: 18px;
+    }
+
+    .badge {
+        font-size: 9px;
+        padding: 3px 8px;
+    }
+}

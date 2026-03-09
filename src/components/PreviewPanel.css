@@ -657,3 +657,238 @@
     width: 360px;
     min-width: 360px;
 }
+
+/* ─── RESPONSIVE ─── */
+
+@media (max-width: 768px) {
+
+    /* Header & tabs */
+    .preview-header-bar {
+        padding: 12px 16px;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .preview-panel-title {
+        font-size: 14px;
+    }
+
+    .preview-tabs {
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        gap: 2px;
+        padding: 2px;
+    }
+
+    .preview-tab {
+        padding: 6px 10px;
+        font-size: 11px;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .preview-viewport {
+        padding: 16px 12px;
+        min-height: 300px;
+    }
+
+    .yt-device-label {
+        font-size: 10px;
+        margin-bottom: 12px;
+    }
+
+    /* Home grid → 1 column */
+    .yt-home-grid {
+        grid-template-columns: 1fr;
+        gap: 14px;
+    }
+
+    .yt-title {
+        font-size: 13px;
+    }
+
+    .yt-channel,
+    .yt-stats {
+        font-size: 11px;
+    }
+
+    .yt-avatar {
+        width: 30px;
+        height: 30px;
+        font-size: 12px;
+    }
+
+    /* Search → stack vertically */
+    .yt-search-bar-mock {
+        font-size: 12px;
+        padding: 6px 12px;
+        margin-bottom: 14px;
+    }
+
+    .yt-search-result {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .yt-search-thumb {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .yt-search-result.yt-card-ghost .yt-search-thumb {
+        width: 100%;
+        min-width: auto;
+    }
+
+    .yt-title-search {
+        font-size: 15px;
+    }
+
+    .yt-search-desc {
+        display: none;
+    }
+
+    /* Sidebar → stack */
+    .yt-sidebar-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+    }
+
+    .yt-player-title {
+        padding: 10px 12px;
+        font-size: 14px;
+    }
+
+    .yt-sidebar-list {
+        gap: 10px;
+    }
+
+    .yt-sidebar-item .yt-sidebar-thumb {
+        width: 140px;
+        min-width: 140px;
+    }
+
+    .yt-sidebar-title {
+        font-size: 12px;
+    }
+
+    /* Mobile phone mockup — scale down */
+    .yt-phone-frame {
+        width: 100%;
+        max-width: 340px;
+        border-radius: 36px;
+    }
+
+    .yt-phone-dynamic-island {
+        width: 70px;
+        height: 20px;
+    }
+
+    .yt-phone-status-bar {
+        padding: 2px 18px 4px;
+        font-size: 12px;
+    }
+
+    .yt-status-time {
+        font-size: 13px;
+    }
+
+    .yt-phone-header {
+        padding: 6px 12px 8px;
+    }
+
+    .yt-phone-logo {
+        font-size: 16px;
+    }
+
+    .yt-phone-content {
+        max-height: 360px;
+    }
+
+    .yt-phone-info {
+        padding: 8px 12px;
+    }
+
+    .yt-phone-title {
+        font-size: 12px;
+    }
+
+    .yt-phone-navbar {
+        padding: 6px 4px 20px;
+    }
+
+    .yt-phone-nav-item {
+        min-width: 40px;
+    }
+
+    .yt-phone-nav-item span {
+        font-size: 8px;
+    }
+
+    .yt-nav-create {
+        width: 32px;
+        height: 24px;
+    }
+
+    /* TV frame */
+    .yt-tv-frame {
+        border-radius: 8px;
+        border-width: 3px;
+    }
+
+    .yt-tv-content {
+        padding: 10px;
+    }
+
+    .yt-tv-title {
+        font-size: 16px;
+    }
+
+    .yt-tv-channel {
+        font-size: 11px;
+    }
+
+    .yt-tv-overlay {
+        padding: 16px 12px 10px;
+    }
+
+    .yt-tv-label {
+        font-size: 13px;
+        margin-bottom: 8px;
+    }
+
+    .yt-tv-card {
+        min-width: 140px;
+    }
+
+    .yt-tv-card-title {
+        font-size: 11px;
+    }
+}
+
+@media (min-width: 769px) and (max-width: 1100px) {
+    .yt-home-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .yt-search-thumb {
+        width: 260px;
+        min-width: 260px;
+    }
+
+    .yt-search-result.yt-card-ghost .yt-search-thumb {
+        width: 260px;
+        min-width: 260px;
+    }
+
+    .yt-sidebar-layout {
+        grid-template-columns: 1fr 250px;
+    }
+
+    .yt-sidebar-item .yt-sidebar-thumb {
+        width: 140px;
+        min-width: 140px;
+    }
+}

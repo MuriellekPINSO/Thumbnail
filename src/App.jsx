@@ -15,13 +15,21 @@ export default function App() {
   const [mainTitle, setMainTitle] = useState('');
   const [subtitle, setSubtitle] = useState('');
   const [tagText, setTagText] = useState('');
+  const [customPrompt, setCustomPrompt] = useState('');
   const [selectedStyle, setSelectedStyle] = useState('bold');
   const [selectedColor, setSelectedColor] = useState('#e8ff3c');
   const [selectedCount, setSelectedCount] = useState(2);
   const [uploadedImages, setUploadedImages] = useState([]);
   const [thumbnails, setThumbnails] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState(0);
   const generationIdRef = useRef(0);
+
+  const handleCanvasReady = useCallback((index, dataUrl) => {
+    setThumbnails(prev => prev.map((t, i) =>
+      i === index ? { ...t, canvasDataUrl: dataUrl } : t
+    ));
+  }, []);
 
   const handleGenerate = useCallback(async () => {
     const title = mainTitle.trim();
@@ -31,6 +39,7 @@ export default function App() {
     }
 
     setIsGenerating(true);
+    setPreviewIndex(0);
     generationIdRef.current += 1;
     const currentGenId = generationIdRef.current;
 
@@ -48,6 +57,7 @@ export default function App() {
         aiImageUrl: null,
         isAiGenerating: true,
         aiError: null,
+        canvasDataUrl: null,
       });
     }
     setThumbnails([...newThumbnails]);
@@ -55,15 +65,30 @@ export default function App() {
     // Launch AI generation for each thumbnail in parallel
     const promises = newThumbnails.map(async (thumb, i) => {
       try {
-        const prompt = buildThumbnailPrompt({
-          title: thumb.title,
-          subtitle: thumb.subtitle,
-          tag: thumb.tag,
-          style: selectedStyle,
-          color: selectedColor,
-        }) + ` Layout variation ${i + 1}: ${thumb.variant === 'left-image' ? 'image on the left, text on the right' : thumb.variant === 'split' ? 'text on the left, image on the right' : 'centered text overlaying background'}.`;
+        // Extract data URLs from uploaded images to send to AI
+        const imageDataUrls = uploadedImages.map(img => img.src);
+        const hasImages = imageDataUrls.length > 0;
 
-        const imageUrl = await generateThumbnailImage(prompt);
+        // Use custom prompt if provided, otherwise build automatically
+        let prompt;
+        if (customPrompt.trim()) {
+          prompt = customPrompt.trim();
+          if (hasImages) {
+            prompt += ' IMPORTANT: Use the exact person/subject from the attached photo(s) and integrate them naturally into the thumbnail. Keep their face and appearance exactly as shown.';
+          }
+          prompt += ` Layout variation ${i + 1}: ${thumb.variant === 'left-image' ? 'person/image on the left, text on the right' : thumb.variant === 'split' ? 'text on the left, person/image on the right' : 'centered text with person visible in the composition'}.`;
+        } else {
+          prompt = buildThumbnailPrompt({
+            title: thumb.title,
+            subtitle: thumb.subtitle,
+            tag: thumb.tag,
+            style: selectedStyle,
+            color: selectedColor,
+            hasImages,
+          }) + ` Layout variation ${i + 1}: ${thumb.variant === 'left-image' ? 'person/image on the left, text on the right' : thumb.variant === 'split' ? 'text on the left, person/image on the right' : 'centered text with person visible in the composition'}.`;
+        }
+
+        const imageUrl = await generateThumbnailImage(prompt, hasImages ? imageDataUrls : []);
 
         // Update this specific thumbnail with the AI result
         setThumbnails(prev => prev.map((t, idx) =>
@@ -85,7 +110,7 @@ export default function App() {
     // Wait for all to finish before re-enabling button
     await Promise.allSettled(promises);
     setIsGenerating(false);
-  }, [mainTitle, subtitle, tagText, selectedCount, selectedStyle, selectedColor]);
+  }, [mainTitle, subtitle, tagText, customPrompt, selectedCount, selectedStyle, selectedColor, uploadedImages]);
 
   return (
     <>
@@ -98,6 +123,8 @@ export default function App() {
           setSubtitle={setSubtitle}
           tagText={tagText}
           setTagText={setTagText}
+          customPrompt={customPrompt}
+          setCustomPrompt={setCustomPrompt}
           selectedStyle={selectedStyle}
           setSelectedStyle={setSelectedStyle}
           selectedColor={selectedColor}
@@ -115,6 +142,9 @@ export default function App() {
           color={selectedColor}
           uploadedImages={uploadedImages}
           mainTitle={mainTitle}
+          previewIndex={previewIndex}
+          setPreviewIndex={setPreviewIndex}
+          onCanvasReady={handleCanvasReady}
         />
       </div>
     </>
