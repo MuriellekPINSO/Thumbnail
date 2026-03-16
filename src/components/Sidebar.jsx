@@ -104,14 +104,14 @@ export default function Sidebar({
                     <textarea
                         id="customPrompt"
                         className="prompt-textarea"
-                        placeholder="Décris précisément le style de thumbnail que tu veux. Ex: Un fond dégradé violet avec du texte blanc en gras, une personne surprise à droite, des émojis flottants..."
+                        placeholder="Les bonnes pratiques (composition, typo, contraste...) sont déjà intégrées ! Ajoute ici des instructions créatives supplémentaires. Ex: Une personne surprise tenant un laptop, fond dégradé violet, des émojis 🤯 flottants..."
                         maxLength={500}
                         rows={3}
                         value={customPrompt}
                         onChange={(e) => setCustomPrompt(e.target.value)}
                     />
                     <div className="prompt-hint">
-                        {customPrompt.length}/500 — Laisse vide pour un prompt auto-généré
+                        {customPrompt.length}/500 — Les règles pro sont appliquées automatiquement
                     </div>
                 </div>
             </div>

@@ -69,14 +69,25 @@ export default function App() {
         const imageDataUrls = uploadedImages.map(img => img.src);
         const hasImages = imageDataUrls.length > 0;
 
+        // Build the layout instruction for this variant
+        const layoutInstruction = `LAYOUT: ${thumb.variant === 'left-image' ? 'Person/image on the LEFT side, text on the RIGHT side' : thumb.variant === 'split' ? 'Text on the LEFT side, person/image on the RIGHT side' : 'CENTERED text with person visible in the background or beside the text'}.`;
+
         // Use custom prompt if provided, otherwise build automatically
+        // Both paths benefit from the built-in thumbnail best practices
         let prompt;
         if (customPrompt.trim()) {
-          prompt = customPrompt.trim();
-          if (hasImages) {
-            prompt += ' IMPORTANT: Use the exact person/subject from the attached photo(s) and integrate them naturally into the thumbnail. Keep their face and appearance exactly as shown.';
-          }
-          prompt += ` Layout variation ${i + 1}: ${thumb.variant === 'left-image' ? 'person/image on the left, text on the right' : thumb.variant === 'split' ? 'text on the left, person/image on the right' : 'centered text with person visible in the composition'}.`;
+          // Custom prompt: wrap with system rules + user's specific instructions
+          prompt = buildThumbnailPrompt({
+            title: thumb.title,
+            subtitle: thumb.subtitle,
+            tag: thumb.tag,
+            style: selectedStyle,
+            color: selectedColor,
+            hasImages,
+          });
+          // Append user's custom instructions as additional creative direction
+          prompt += `\n\nADDITIONAL CREATIVE DIRECTION FROM USER:\n${customPrompt.trim()}`;
+          prompt += `\n\n${layoutInstruction}`;
         } else {
           prompt = buildThumbnailPrompt({
             title: thumb.title,
@@ -85,7 +96,8 @@ export default function App() {
             style: selectedStyle,
             color: selectedColor,
             hasImages,
-          }) + ` Layout variation ${i + 1}: ${thumb.variant === 'left-image' ? 'person/image on the left, text on the right' : thumb.variant === 'split' ? 'text on the left, person/image on the right' : 'centered text with person visible in the composition'}.`;
+          });
+          prompt += `\n\n${layoutInstruction}`;
         }
 
         const imageUrl = await generateThumbnailImage(prompt, hasImages ? imageDataUrls : []);
