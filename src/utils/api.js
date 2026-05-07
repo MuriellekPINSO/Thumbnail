@@ -1,13 +1,57 @@
 const API_BASE = 'https://ai-gateway.vercel.sh/v1';
 const API_KEY = import.meta.env.VITE_AI_GATEWAY_API_KEY;
 
-// NanoBanana model (Gemini 2.5 Flash Image) via Vercel AI Gateway
-const MODEL = 'google/gemini-2.5-flash-image-preview';
+// GPT-2 Image model via Vercel AI Gateway
+const MODEL = 'openai/gpt-2-image';
+
+// Closest landscape size to 16:9 supported by gpt-image-style endpoints.
+const IMAGE_SIZE = '1536x1024';
+
+function dataUrlToBlob(dataUrl) {
+    const [meta, b64] = dataUrl.split(',');
+    const mime = meta.match(/data:([^;]+)/)?.[1] || 'image/png';
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return new Blob([bytes], { type: mime });
+}
+
+function extOf(mime) {
+    if (mime.includes('jpeg') || mime.includes('jpg')) return 'jpg';
+    if (mime.includes('webp')) return 'webp';
+    return 'png';
+}
+
+async function handleApiError(response) {
+    const errorData = await response.json().catch(() => ({}));
+    if (response.status === 401) {
+        throw new Error('Clé API AI Gateway invalide ou expirée');
+    }
+    if (response.status === 429) {
+        throw new Error('Trop de requêtes. Veuillez réessayer dans quelques instants.');
+    }
+    throw new Error(
+        errorData.error?.message
+        || `Erreur API AI Gateway (HTTP ${response.status})`
+    );
+}
+
+function extractImageFromResponse(data) {
+    const first = data?.data?.[0];
+    if (first?.b64_json) {
+        return `data:image/png;base64,${first.b64_json}`;
+    }
+    if (first?.url) {
+        return first.url;
+    }
+    console.error('Réponse API complète:', JSON.stringify(data, null, 2));
+    throw new Error('Aucune image générée dans la réponse. Essayez avec un prompt plus descriptif.');
+}
 
 /**
- * Generate a thumbnail image via Vercel AI Gateway (NanoBanana model)
- * Uses the OpenAI-compatible chat/completions endpoint with image modality.
- * Supports multimodal input: text prompt + optional reference images.
+ * Generate a thumbnail image via Vercel AI Gateway (GPT-2 Image model).
+ * - No reference images → POST /images/generations (JSON).
+ * - With reference images → POST /images/edits (multipart, refs uploaded as image[]).
  * @param {string} prompt - Description of the thumbnail to generate
  * @param {string[]} [imageDataUrls] - Optional array of base64 data URLs for reference images
  * @returns {Promise<string>} - Data URL (base64) of the generated image
@@ -17,98 +61,47 @@ export async function generateThumbnailImage(prompt, imageDataUrls = []) {
         throw new Error('Clé API AI Gateway manquante. Vérifiez votre fichier .env (VITE_AI_GATEWAY_API_KEY)');
     }
 
-    // Build multimodal content: images first, then text prompt
-    const contentParts = [];
+    const hasRefs = Array.isArray(imageDataUrls) && imageDataUrls.length > 0;
 
-    // Add reference images as image_url parts
-    if (imageDataUrls && imageDataUrls.length > 0) {
-        for (const dataUrl of imageDataUrls) {
-            contentParts.push({
-                type: 'image_url',
-                image_url: { url: dataUrl },
-            });
-        }
+    let response;
+    if (hasRefs) {
+        const form = new FormData();
+        form.append('model', MODEL);
+        form.append('prompt', prompt);
+        form.append('size', IMAGE_SIZE);
+        form.append('n', '1');
+        imageDataUrls.forEach((dataUrl, i) => {
+            const blob = dataUrlToBlob(dataUrl);
+            form.append('image[]', blob, `ref-${i}.${extOf(blob.type)}`);
+        });
+
+        response = await fetch(`${API_BASE}/images/edits`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${API_KEY}` },
+            body: form,
+        });
+    } else {
+        response = await fetch(`${API_BASE}/images/generations`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${API_KEY}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                model: MODEL,
+                prompt,
+                size: IMAGE_SIZE,
+                n: 1,
+            }),
+        });
     }
 
-    // Add text prompt
-    contentParts.push({
-        type: 'text',
-        text: prompt,
-    });
-
-    const response = await fetch(`${API_BASE}/chat/completions`, {
-        method: 'POST',
-        headers: {
-            'Authorization': `Bearer ${API_KEY}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model: MODEL,
-            messages: [
-                {
-                    role: 'user',
-                    content: contentParts,
-                },
-            ],
-            modalities: ['text', 'image'],
-            stream: false,
-        }),
-    });
-
     if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-
-        if (response.status === 401) {
-            throw new Error('Clé API AI Gateway invalide ou expirée');
-        }
-        if (response.status === 429) {
-            throw new Error('Trop de requêtes. Veuillez réessayer dans quelques instants.');
-        }
-
-        throw new Error(
-            errorData.error?.message
-            || `Erreur API AI Gateway (HTTP ${response.status})`
-        );
+        await handleApiError(response);
     }
 
     const data = await response.json();
-
-    // Extract image from the response
-    // Per Vercel docs, images are in message.images[] with structure:
-    // { type: "image_url", image_url: { url: "data:image/png;base64,..." } }
-    const images = data.choices?.[0]?.message?.images;
-
-    if (images && Array.isArray(images) && images.length > 0) {
-        const firstImage = images[0];
-
-        // Standard Vercel AI Gateway format
-        if (firstImage.type === 'image_url' && firstImage.image_url?.url) {
-            return firstImage.image_url.url;
-        }
-
-        // Fallback: if the image is a direct string (base64)
-        if (typeof firstImage === 'string') {
-            if (firstImage.startsWith('data:')) {
-                return firstImage;
-            }
-            return `data:image/png;base64,${firstImage}`;
-        }
-
-        // Fallback: if there's a url property directly
-        if (firstImage.url) {
-            return firstImage.url;
-        }
-    }
-
-    // Last fallback: check if there's an image URL in the text content
-    const content = data.choices?.[0]?.message?.content || '';
-    const urlMatch = content.match(/!\[.*?\]\((https?:\/\/[^\s)]+)\)/);
-    if (urlMatch) {
-        return urlMatch[1];
-    }
-
-    console.error('Réponse API complète:', JSON.stringify(data, null, 2));
-    throw new Error('Aucune image générée dans la réponse. Essayez avec un prompt plus descriptif.');
+    return extractImageFromResponse(data);
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -268,3 +261,4 @@ export function buildThumbnailPrompt({ title, subtitle, tag, style, color, hasIm
 
     return prompt;
 }
+

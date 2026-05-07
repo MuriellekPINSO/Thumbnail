@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell($cmds = @\\(\"node\",\"npm\",\"npm.cmd\",\"npx\",\"corepack\",\"pnpm\",\"yarn\",\"bun\"\\); foreach \\($c in $cmds\\) { $g = Get-Command $c -ErrorAction SilentlyContinue; if \\($g\\) { \"$c -> $\\($g.Source\\)\" } else { \"$c -> \\(not found\\)\" } })",
+      "PowerShell(\"=== PATH machine \\(HKLM\\) ===\"; [Environment]::GetEnvironmentVariable\\(\"Path\",\"Machine\"\\); \"\"; \"=== PATH utilisateur \\(HKCU\\) ===\"; [Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); \"\"; \"=== where.exe node/npm \\(cherche partout sur le PATH actuel\\) ===\"; & where.exe node 2>&1; & where.exe npm 2>&1; & where.exe npm.cmd 2>&1)",
+      "PowerShell($nodeDir = \"C:\\\\Program Files\\\\nodejs\"; $userPath = [Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\); $newEntries = \\($userPath -split ';'\\) | Where-Object { $_ -ne \"\" -and $_ -ne $nodeDir }; $newPath = $newEntries -join ';'; [Environment]::SetEnvironmentVariable\\(\"Path\", $newPath, \"User\"\\); \"PATH utilisateur nettoye:\"; [Environment]::GetEnvironmentVariable\\(\"Path\",\"User\"\\))"
+    ]
+  }
+}
