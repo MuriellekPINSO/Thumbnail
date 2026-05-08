@@ -1,11 +1,12 @@
 import { useEffect, useRef, useCallback } from 'react';
-import { Download, RotateCw, ImagePlus, Sparkles } from 'lucide-react';
+import { Download, RotateCw, ImagePlus, Sparkles, Pencil } from 'lucide-react';
 import { drawThumbnail, downloadCanvas } from '../utils/drawThumbnail';
 import './ThumbnailCard.css';
 
 export default function ThumbnailCard({
-    title, subtitle, tag, variant, index, style, color, uploadedImages, label, delay,
-    aiImageUrl, isAiGenerating, aiError, onCanvasReady
+    title, subtitle, tag, variant, index, style, color, colors, uploadedImages, label, delay,
+    aiImageUrl, isAiGenerating, aiError, onCanvasReady,
+    onEdit, showEditButton = false,
 }) {
     const canvasRef = useRef(null);
     const onCanvasReadyRef = useRef(onCanvasReady);
@@ -28,7 +29,7 @@ export default function ThumbnailCard({
         const canvas = canvasRef.current;
         if (!canvas) return;
 
-        drawThumbnail(canvas, { title, subtitle, tag, variant, index, style, color, uploadedImages });
+        drawThumbnail(canvas, { title, subtitle, tag, variant, index, style, color, colors, uploadedImages });
 
         if (onCanvasReadyRef.current) {
             try {
@@ -36,7 +37,7 @@ export default function ThumbnailCard({
                 onCanvasReadyRef.current(dataUrl);
             } catch (e) { /* ignore */ }
         }
-    }, [title, subtitle, tag, variant, index, style, color, uploadedImages, aiImageUrl, isAiGenerating]);
+    }, [title, subtitle, tag, variant, index, style, color, colors, uploadedImages, aiImageUrl, isAiGenerating]);
 
     const handleDownload = useCallback(() => {
         if (aiImageUrl) {
@@ -84,6 +85,24 @@ export default function ThumbnailCard({
                     <div className="upload-used-badge">
                         <ImagePlus size={10} /> Photos intégrées
                     </div>
+                )}
+
+                {/* Edit overlay button (visible on active card / on hover) */}
+                {!isAiGenerating && onEdit && (
+                    <button
+                        type="button"
+                        className={`card-edit-overlay ${showEditButton ? 'is-active' : ''}`}
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onEdit();
+                        }}
+                        aria-label="Modifier cette thumbnail"
+                    >
+                        <span className="card-edit-overlay-pill">
+                            <Pencil size={14} strokeWidth={2.4} />
+                            <span>Modifier</span>
+                        </span>
+                    </button>
                 )}
             </div>
             <div className="thumbnail-card-footer">

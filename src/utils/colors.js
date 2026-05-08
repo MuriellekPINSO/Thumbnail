@@ -53,3 +53,55 @@ export function shiftHue(hex, amount) {
     const [r2, g2, b2] = hslToRgb((h + amount / 360 + 1) % 1, s, l);
     return `rgb(${r2},${g2},${b2})`;
 }
+
+// ─── Mix / Darken / Lighten helpers ─────────────────────────────────────────
+
+function clamp255(v) { return Math.max(0, Math.min(255, Math.round(v))); }
+
+/**
+ * Linear-interpolate two hex colors.
+ * @param {string} a   - hex like '#a855f7'
+ * @param {string} b   - hex like '#22d3ee'
+ * @param {number} t   - 0..1 (0 = a, 1 = b)
+ * @returns {string}   - rgb(...) string
+ */
+export function mixHex(a, b, t) {
+    const ca = hexToRgb(a);
+    const cb = hexToRgb(b);
+    const k = Math.max(0, Math.min(1, t));
+    return `rgb(${clamp255(ca.r + (cb.r - ca.r) * k)},${clamp255(ca.g + (cb.g - ca.g) * k)},${clamp255(ca.b + (cb.b - ca.b) * k)})`;
+}
+
+/**
+ * Darken a hex toward black. factor 0 = unchanged, 1 = black.
+ */
+export function darken(hex, factor) {
+    const { r, g, b } = hexToRgb(hex);
+    const k = 1 - Math.max(0, Math.min(1, factor));
+    return `rgb(${clamp255(r * k)},${clamp255(g * k)},${clamp255(b * k)})`;
+}
+
+/**
+ * Lighten a hex toward white. factor 0 = unchanged, 1 = white.
+ */
+export function lighten(hex, factor) {
+    const { r, g, b } = hexToRgb(hex);
+    const k = Math.max(0, Math.min(1, factor));
+    return `rgb(${clamp255(r + (255 - r) * k)},${clamp255(g + (255 - g) * k)},${clamp255(b + (255 - b) * k)})`;
+}
+
+/**
+ * Normalize a colors prop to an array (1..3). Accepts:
+ *   - undefined / null → fallback
+ *   - string → [string]
+ *   - array → array (clamped to length 3)
+ */
+export function normalizeColors(input, fallback = ['#a855f7']) {
+    if (!input) return fallback.slice(0, 3);
+    if (typeof input === 'string') return [input];
+    if (Array.isArray(input)) {
+        const filtered = input.filter(c => typeof c === 'string' && c.length > 0);
+        return (filtered.length > 0 ? filtered : fallback).slice(0, 3);
+    }
+    return fallback.slice(0, 3);
+}

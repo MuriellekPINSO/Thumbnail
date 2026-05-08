@@ -1,18 +1,158 @@
-.main {
-  display: grid;
-  grid-template-columns: 380px 1fr;
-  min-height: calc(100vh - 73px);
+/* ═══════════════════════════════════════════════════════════
+   STUDIO LAYOUT — Hero + Gallery
+   ─────────────────────────────────────────────────────────── */
+
+.studio {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 56px 40px 80px;
+    display: flex;
+    flex-direction: column;
+    gap: 56px;
 }
 
+/* ─── Hero section ─── */
+.hero {
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 22px;
+    padding: 16px 0 8px;
+}
+
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 16px;
+    border-radius: 100px;
+    background: var(--gradient-brand-soft);
+    border: 1px solid var(--border-strong);
+    color: var(--text-soft);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    backdrop-filter: blur(10px);
+}
+
+.hero-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--neon-violet);
+    box-shadow: 0 0 12px var(--neon-violet), 0 0 24px var(--glow-cyan);
+    animation: pulse-dot 2s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(0.85); }
+}
+
+.hero-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 68px);
+    line-height: 1.05;
+    letter-spacing: -2px;
+    color: var(--text);
+    margin: 0;
+    max-width: 14ch;
+}
+
+.hero-title-accent {
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    filter: drop-shadow(0 0 24px var(--glow-violet));
+    display: inline-block;
+}
+
+.hero-subtitle {
+    font-size: clamp(15px, 1.6vw, 18px);
+    line-height: 1.6;
+    color: var(--muted);
+    max-width: 56ch;
+    margin: 0;
+}
+
+/* ─── Form section (form card + live preview side-by-side) ─── */
+.studio-form {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 320px;
+    gap: 24px;
+    align-items: start;
+    justify-content: center;
+    max-width: 1100px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.studio-form > .form-panel {
+    margin: 0 auto;
+    width: 100%;
+}
+
+.studio-form-side {
+    position: sticky;
+    top: 96px;
+    align-self: start;
+}
+
+/* ─── Results section ─── */
+.studio-results {
+    width: 100%;
+}
+
+/* ─── Tablet ─── */
 @media (max-width: 1024px) {
-  .main {
-    grid-template-columns: 320px 1fr;
-  }
+    .studio {
+        padding: 40px 28px 64px;
+        gap: 44px;
+    }
+
+    .studio-form {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        max-width: 640px;
+    }
+
+    .studio-form-side {
+        position: static;
+        top: auto;
+        max-width: 480px;
+        margin: 0 auto;
+        width: 100%;
+    }
 }
 
+/* ─── Mobile ─── */
 @media (max-width: 768px) {
-  .main {
-    grid-template-columns: 1fr;
-    min-height: auto;
-  }
+    .studio {
+        padding: 28px 16px 56px;
+        gap: 36px;
+    }
+
+    .hero {
+        gap: 16px;
+    }
+
+    .hero-eyebrow {
+        font-size: 10px;
+        padding: 6px 14px;
+        letter-spacing: 1px;
+    }
+
+    .hero-title {
+        letter-spacing: -1px;
+    }
+
+    .hero-subtitle {
+        font-size: 14px;
+    }
 }

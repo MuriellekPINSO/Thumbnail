@@ -1,17 +1,45 @@
+/* ═══════════════════════════════════════════════════════════
+   DROPZONE — neon dashed
+   ─────────────────────────────────────────────────────────── */
+
 .drop-zone {
-    border: 2px dashed var(--border);
-    border-radius: 12px;
-    padding: 32px 20px;
+    position: relative;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 14px;
+    padding: 28px 20px;
     text-align: center;
     cursor: pointer;
-    transition: all 0.25s;
-    position: relative;
+    transition: all 0.3s ease;
+    background: var(--card);
+    overflow: hidden;
+    isolation: isolate;
+}
+
+.drop-zone::before {
+    /* Subtle gradient wash that intensifies on hover */
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: var(--gradient-brand-soft);
+    opacity: 0;
+    transition: opacity 0.35s;
+    z-index: -1;
 }
 
 .drop-zone:hover,
 .drop-zone.dragover {
+    border-style: solid;
     border-color: var(--accent);
-    background: rgba(232, 255, 60, 0.04);
+    background: var(--card-hover);
+    box-shadow:
+        0 0 0 4px var(--glow-soft),
+        0 8px 24px var(--glow-violet),
+        inset 0 0 30px var(--glow-soft);
+}
+
+.drop-zone:hover::before,
+.drop-zone.dragover::before {
+    opacity: 1;
 }
 
 .drop-zone input[type="file"] {
@@ -25,16 +53,39 @@
 }
 
 .drop-icon {
-    width: 44px;
-    height: 44px;
-    border-radius: 12px;
-    background: var(--card);
-    border: 1px solid var(--border);
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    background: var(--gradient-brand);
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 12px;
-    font-size: 20px;
+    margin: 0 auto 14px;
+    color: #fff;
+    box-shadow:
+        0 6px 20px var(--glow-violet),
+        0 0 30px var(--glow-cyan),
+        inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s;
+}
+
+.drop-icon::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), transparent 50%);
+}
+
+.drop-icon svg {
+    color: #fff !important;
+    position: relative;
+    z-index: 1;
+}
+
+.drop-zone:hover .drop-icon {
+    transform: translateY(-2px) scale(1.04);
 }
 
 .drop-text {
@@ -44,20 +95,25 @@
 }
 
 .drop-text strong {
-    color: var(--accent);
-    font-weight: 500;
+    color: var(--text);
+    font-weight: 600;
+    background: var(--gradient-text);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
 }
 
+/* ─── Mobile ─── */
 @media (max-width: 768px) {
     .drop-zone {
         padding: 20px 16px;
     }
 
     .drop-icon {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        margin-bottom: 8px;
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+        margin-bottom: 10px;
     }
 
     .drop-text {

@@ -1,12 +1,29 @@
-/* ───────────────────────────────────────────────────────────
-   PREVIEW PANEL — YouTube Realistic Mockups
+/* ═══════════════════════════════════════════════════════════
+   PREVIEW PANEL — YouTube realistic mockups
+   Wrapper chrome adapts to theme; inner mockups stay
+   YouTube-dark (that's the canonical look we are emulating).
    ─────────────────────────────────────────────────────────── */
 
 .preview-panel {
-    background: #0f0f0f;
-    border-top: 1px solid var(--border);
-    padding: 0;
+    background: var(--surface);
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow-md);
     overflow: hidden;
+    position: relative;
+}
+
+.preview-panel::before {
+    /* Top gradient hairline */
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: var(--gradient-brand);
+    opacity: 0.7;
+    pointer-events: none;
 }
 
 .preview-header-bar {
@@ -14,27 +31,35 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 24px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    border-bottom: 1px solid var(--border);
     flex-wrap: wrap;
     gap: 12px;
+    background: var(--gradient-card);
 }
 
 .preview-panel-title {
     font-family: 'Syne', sans-serif;
     font-size: 15px;
     font-weight: 700;
-    color: #fff;
+    color: var(--text);
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
 }
 
+.preview-panel-title svg {
+    color: var(--accent);
+    filter: drop-shadow(0 0 8px var(--glow-violet));
+}
+
+/* ─── Tabs ─── */
 .preview-tabs {
     display: flex;
     gap: 4px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 8px;
-    padding: 3px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
 }
 
 .preview-tab {
@@ -44,30 +69,36 @@
     padding: 7px 14px;
     border: none;
     background: transparent;
-    color: #888;
+    color: var(--muted);
     font-size: 12px;
     font-weight: 500;
     font-family: 'DM Sans', sans-serif;
-    border-radius: 6px;
+    border-radius: 7px;
     cursor: pointer;
-    transition: all 0.2s;
+    transition: all 0.25s;
 }
 
 .preview-tab:hover {
-    color: #ccc;
-    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-soft);
+    background: var(--card);
 }
 
 .preview-tab.active {
     color: #fff;
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--gradient-brand);
+    box-shadow:
+        0 4px 12px var(--glow-violet),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+/* ─── Viewport (always dark — YouTube mimicry) ─── */
 .preview-viewport {
     padding: 24px;
     min-height: 400px;
     display: flex;
     justify-content: center;
+    background: #0f0f0f;
+    color-scheme: dark;
 }
 
 /* ─── YT MOCKUP BASE ─── */
@@ -142,27 +173,28 @@
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--gradient-brand);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 14px;
     font-weight: 700;
-    color: #000;
+    color: #fff;
     flex-shrink: 0;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06) inset;
 }
 
 .yt-avatar-small {
     width: 24px;
     height: 24px;
     border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--gradient-brand);
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 10px;
     font-weight: 700;
-    color: #000;
+    color: #fff;
     flex-shrink: 0;
 }
 
@@ -212,6 +244,7 @@
     width: 55%;
 }
 
+/* ─── HIGHLIGHT ring (uses theme accent — neon!) ─── */
 .yt-card-highlight {
     position: relative;
 }
@@ -219,11 +252,20 @@
 .yt-card-highlight::after {
     content: '';
     position: absolute;
-    inset: -2px;
+    inset: -3px;
     border: 2px solid var(--accent);
-    border-radius: 10px;
+    border-radius: 11px;
     pointer-events: none;
-    opacity: 0.5;
+    box-shadow:
+        0 0 0 1px var(--accent),
+        0 0 20px var(--glow-violet),
+        0 0 40px var(--glow-cyan);
+    animation: highlight-pulse 2.6s ease-in-out infinite;
+}
+
+@keyframes highlight-pulse {
+    0%, 100% { opacity: 0.7; }
+    50% { opacity: 1; }
 }
 
 /* ─── DESKTOP HOME GRID ─── */
@@ -337,13 +379,14 @@
 .yt-play-btn {
     width: 60px;
     height: 42px;
-    background: rgba(255, 0, 0, 0.8);
+    background: rgba(255, 0, 0, 0.85);
     border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 20px;
     color: #fff;
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
 }
 
 .yt-player-title {
@@ -679,7 +722,7 @@
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         gap: 2px;
-        padding: 2px;
+        padding: 3px;
     }
 
     .preview-tab {
