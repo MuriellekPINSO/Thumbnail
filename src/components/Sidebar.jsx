@@ -490,15 +490,19 @@ function Step3Avance({ customPrompt, setCustomPrompt, uploadedImages, onFileAdde
    how the final thumbnail will read.
    ════════════════════════════════════════ */
 
+// Each style maps to a small fallback chain of free / system fonts so the
+// mini-preview reflects the typographic intent baked into the AI prompt.
+// First name in the stack is the "ideal" font (usually free via Google Fonts),
+// followed by progressively more universal fallbacks.
 const STYLE_FONT_MAP = {
-    bold:      { font: "'Syne', 'Anton', sans-serif",     weight: 800, transform: 'uppercase', letter: '-1px', tilt: '-1deg' },
-    clean:     { font: "'DM Sans', sans-serif",            weight: 700, transform: 'none',      letter: '-0.5px', tilt: '0deg' },
-    dark:      { font: "'Syne', 'Anton', sans-serif",     weight: 800, transform: 'uppercase', letter: '-0.5px', tilt: '0deg' },
-    vibrant:   { font: "'Syne', sans-serif",               weight: 900, transform: 'uppercase', letter: '-1px',  tilt: '-2deg' },
-    tech:      { font: "'DM Sans', sans-serif",            weight: 800, transform: 'none',      letter: '-1px',  tilt: '0deg' },
-    gaming:    { font: "'Syne', 'Anton', sans-serif",     weight: 900, transform: 'uppercase', letter: '0px',   tilt: '-3deg' },
-    hype:      { font: "'Anton', 'Syne', sans-serif",     weight: 900, transform: 'uppercase', letter: '0px',   tilt: '0deg' },
-    editorial: { font: "'Playfair Display', serif",        weight: 700, transform: 'none',      letter: '-1px',  tilt: '0deg' },
+    bold:      { font: "'Anton', 'Bebas Neue', 'Oswald', Impact, 'Syne', sans-serif",                  weight: 800, transform: 'uppercase', letter: '-1px',   tilt: '-1deg' },
+    clean:     { font: "'Inter', 'DM Sans', 'SF Pro Display', 'Helvetica Neue', system-ui, sans-serif", weight: 700, transform: 'none',      letter: '-0.5px', tilt: '0deg'  },
+    dark:      { font: "'Oswald', 'Bebas Neue', 'Anton', 'Syne', Impact, sans-serif",                  weight: 800, transform: 'uppercase', letter: '-0.5px', tilt: '0deg'  },
+    vibrant:   { font: "'Fraunces', 'Recoleta', 'Syne', 'Cooper Black', sans-serif",                   weight: 900, transform: 'uppercase', letter: '-1px',   tilt: '-2deg' },
+    tech:      { font: "'Inter', 'Geist', 'DM Sans', 'SF Pro Display', system-ui, sans-serif",         weight: 800, transform: 'none',      letter: '-1px',   tilt: '0deg'  },
+    gaming:    { font: "'Bebas Neue', 'Anton', 'Oswald', 'Syne', Impact, sans-serif",                  weight: 900, transform: 'uppercase', letter: '0px',    tilt: '-3deg' },
+    hype:      { font: "'Anton', Impact, 'Bebas Neue', 'Oswald', 'Syne', sans-serif",                  weight: 900, transform: 'uppercase', letter: '0px',    tilt: '0deg'  },
+    editorial: { font: "'Playfair Display', 'Cormorant Garamond', 'EB Garamond', Georgia, serif",       weight: 700, transform: 'none',      letter: '-1px',   tilt: '0deg'  },
 };
 
 export function LiveMiniPreview({ title, subtitle, tag, style, colors, format }) {

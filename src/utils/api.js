@@ -166,7 +166,7 @@ const THUMBNAIL_SYSTEM_RULES = [
 
     // ── COMPOSITION ──
     'Apply the rule of thirds: place the main subject on a third-line (vertical thirds for landscape/square, horizontal thirds for portrait), never dead center unless the layout explicitly says "centered".',
-    'There must be ONE clear focal point that draws the eye instantly. Avoid clutter — at most 2-3 distinct elements (subject + text + optional prop/icon/badge).',
+    'There must be ONE clear focal point that draws the eye instantly. Avoid clutter — at most 2-3 distinct elements (subject + text + optional prop/icon/badge). Reject the temptation to add random shapes, icons, lens flares, sparkles, lightning bolts, or arrows unless the chosen STYLE explicitly calls for them. Less is more.',
     '__SAFE_ZONE_PLACEHOLDER__',
     'Leave a small safe margin (~40 px) around all edges so text and faces are not cropped on any device.',
 
@@ -176,11 +176,15 @@ const THUMBNAIL_SYSTEM_RULES = [
     'Add subtle background depth cues: light leaks, lens flares, rim lighting, atmospheric haze, ambient particles, or out-of-focus environment elements. The viewer should feel the scene has DEPTH, not flatness.',
 
     // ── TYPOGRAPHY ──
-    'Text is the second most important element after the subject. Use a bold, heavy-weight sans-serif typeface (Montserrat Extra Bold, Impact, Bebas Neue, Anton, SF Pro Display Black, Inter Black). NEVER thin, light, serif, script, or decorative fonts (unless the style is Editorial which permits a confident serif).',
+    'Text is the second most important element after the subject. Use a bold, heavy-weight typeface — see the style-specific font shortlist below for variety. NEVER thin, light, script, or decorative fonts (unless the Editorial style explicitly permits a confident serif).',
     'Limit text to 3-5 HIGH-IMPACT words. Each word must be instantly readable at mobile size (168×94 px). If a title is long, distill to the most impactful keywords.',
     'Text size for the main title must be VERY LARGE — at least 20-25% of the thumbnail height.',
     'Always add a strong text outline (thick, 6-12 px), a drop shadow, or a solid contrasting background panel behind text to guarantee legibility on any device.',
     'Text color must have extreme contrast with its immediate background. Never place text on a similarly-toned area. If the background is busy, use a colored panel or an outline twice as thick.',
+    // ── TEXT RENDERING (gpt-image-1 fails text easily — strict rules to keep it clean) ──
+    'TEXT RENDERING — render every visible word with PIXEL-PERFECT accuracy. Each letter must be correctly shaped and spelled exactly as quoted between the double-quotes provided in CONTENT TO DISPLAY. NEVER invent, drop, duplicate, mis-spell, or rearrange letters. NEVER add filler / placeholder words / lorem ipsum / random characters anywhere in the image.',
+    'If the title contains accented characters (é, è, ê, à, ç, ù, î, etc.) or punctuation (! ? \' ":), reproduce them exactly. If the model cannot render an accent perfectly, prefer rendering the unaccented letter cleanly rather than producing a mangled glyph.',
+    'Text must be rendered as integrated graphic design (typography on a poster), NOT as a transparent watermark or sticker pasted on top of the photo. Treat letters as physical design objects with weight, kerning, alignment, and intent.',
 
     // ── HUMAN FACES (when applicable) ──
     'When a person is part of the thumbnail, the face must fill 30-50% of the frame area. Use an EXAGGERATED emotional expression: surprise, shock, excitement, curiosity, awe — never neutral or flat affect.',
@@ -221,7 +225,7 @@ const STYLE_PRESETS = {
             'Subtle environmental texture: a faint hexagonal grid OR perspective lines OR a horizon line in the bottom third. Never plain.',
             'Lens flare or specular highlight in the negative-space corner (upper third) to give the background a sense of physical light source.',
             'Subject (if a person): dramatic three-quarter pose, lit by strong key light from one side, deep shadow on the other, intense rim light. Expression: focused, intrigued, or shocked.',
-            'Typography: uppercase, ultra-heavy weight (Anton / Bebas Neue / Impact), slightly tilted (1-3°). Strong glow halo in PRIMARY color around the text + thick black outline (8 px).',
+            'Typography: uppercase, ultra-heavy display weight. Pick from Anton, Bebas Neue, Impact, Druk Wide Super, Tungsten Black, Knockout 91 Ultmaht, Acumin Pro Black, Helvetica Neue 95 Black, Acier Black Solid, or Trade Gothic Bold Condensed. Slightly tilted (1-3°). Strong glow halo in PRIMARY color around the text + thick black outline (8 px).',
             'Mood: powerful, intense, authoritative. Think a National Geographic cover meets a movie poster.',
         ],
     },
@@ -232,7 +236,7 @@ const STYLE_PRESETS = {
             'Studio-style soft lighting on the subject — diffused key light from above, gentle fill, almost no harsh shadows. Magazine cover quality.',
             'Composition: generous whitespace, every element precisely placed, clear visual hierarchy. Allow the design to breathe.',
             'Subject (if person): confident posture, slight smile or pensive expression, looking at camera or off-frame thoughtfully. Subject is hero but not screaming.',
-            'Typography: modern geometric sans-serif (Inter, SF Pro Display, Outfit). Heavy weight but not aggressive — confident, not shouting. Tight, intentional kerning.',
+            'Typography: modern geometric sans-serif. Pick from Inter Bold/Black, SF Pro Display Bold, Outfit Bold, Söhne Buch/Halbfett, Roobert Medium, Geist Bold, IBM Plex Sans SemiBold, Aeonik Bold, Neue Haas Grotesk Display Pro 75 Bold, or Suisse Int\'l Bold. Heavy weight but not aggressive — confident, not shouting. Tight, intentional kerning.',
             'PRIMARY accent used sparingly: a single underline beneath the title, a small pill-shaped badge, a thin colored hairline rule, or one keyword highlighted.',
             'Mood: trustworthy, sophisticated, premium. Apple-keynote aesthetic. Think presentation slide, NOT clickbait.',
         ],
@@ -245,7 +249,7 @@ const STYLE_PRESETS = {
             'Subject in razor-sharp focus, shallow depth of field. Subject lit dramatically — heavy contrast with one side bathed in PRIMARY-color rim light, the other in deep shadow.',
             'Film texture: subtle grain (1-2% opacity) over the whole image. Optional fine scanlines or very mild chromatic aberration on edges.',
             'Color grading: Blade Runner / The Batman — teal-orange split toning, crushed blacks, lifted shadows in the colored direction.',
-            'Typography: all-caps, heavy. Apply a NEON glow effect in PRIMARY color OR a metallic sheen. Text should look like it\'s emerging from the darkness, slightly emissive.',
+            'Typography: all-caps, heavy. Pick from Druk Wide Heavy, Industry Inc, Bourton Hand Drop, Tungsten Black, Knockout 90, Anton Wide, Druk Cyr, Industry Test Bold, Acier BAT Solid, or Trade Gothic Bold Extended. Apply a NEON glow effect in PRIMARY color OR a metallic chrome / brushed-steel sheen. Text should look like it\'s emerging from the darkness, slightly emissive.',
             'Mood: mysterious, premium, cinematic. Perfect for storytelling, true-crime, tech-deep-dive, philosophical content.',
         ],
     },
@@ -256,7 +260,7 @@ const STYLE_PRESETS = {
             'Add dynamic background motifs: bold geometric shapes (circles, triangles, blobs) floating with subtle 3D depth, OR comic-book speed lines radiating from the subject, OR a confetti/sparkle layer scattered across the frame.',
             'Optional 3D rendered elements (chrome shapes, balloons, oversized emoji) for tactile depth.',
             'Subject: high-energy expression — laughter, surprise, jumping mid-air feel. Lit with bright even key light, almost flash-photography style.',
-            'Typography: extra-bold, slightly rounded sans-serif. Multi-colored fills OR a thick contrasting outline. Each word can be its own color from the palette.',
+            'Typography: extra-bold, slightly rounded display. Pick from Migra Extrabold, Recoleta Bold, Moret ExtraBold, Druk Cyr, Cooper BT Black, Caslon Doric Black, Sharp Grotesk Black 25, Sentinel Black, Söhne Breit Kraftig, or Editorial New Heavy. Multi-colored fills OR a thick contrasting outline. Each word can be its own color from the palette.',
             'Sparkles, starbursts, lens flares, or comic-book POW/BOOM bursts for explosive energy.',
             'Mood: youthful, fun, high-octane. Everything is dialed to 11. NO subtlety, NO whitespace, NO restraint.',
         ],
@@ -268,7 +272,7 @@ const STYLE_PRESETS = {
             'Hero product (or stylized object) in razor-sharp focus, dead-center or on the rule-of-thirds line. Studio lighting: strong key light from above-left, soft fill, accent rim light in the PRIMARY color along the edge of the product.',
             'Subtle reflective floor or surface beneath the product — soft mirror reflection fading into the dark background.',
             'Background tech motifs: a hairline grid of dots, faint spectral light bar, or barely-visible blueprint lines. Always subtle, never busy.',
-            'Typography: clean modern sans-serif (Inter ExtraBold, SF Pro Display Black). Tight tracking. White text with ONE keyword in PRIMARY color.',
+            'Typography: clean modern sans-serif. Pick from Inter ExtraBold/Black, SF Pro Display Black, Geist Bold, Söhne Kraftig, Suisse Int\'l Bold, JetBrains Mono Bold (for tags), Roobert Heavy, Aeonik Black, IBM Plex Sans Bold, or Neue Haas Grotesk Display 95 Black. Tight tracking. White text with ONE keyword in PRIMARY color.',
             'Tag/badge: small monospace label in PRIMARY color — "REVIEW", "TESTED", "RANKED", "vs.", placed top-left or top-right.',
             'Mood: authoritative, premium, DSLR-quality product photography. NO stock-photo vibe.',
         ],
@@ -280,7 +284,7 @@ const STYLE_PRESETS = {
             'Diagonal energy bands, lightning bolts, or holographic motion-blur streaks cutting across the frame at 15-30°.',
             'Subject (gamer/character) lit by RGB rim lights from BOTH sides — magenta on one cheek, cyan on the other. Exaggerated dramatic expression: shock, focus, victory roar.',
             'Add particle effects: glowing embers, electric sparks, holographic glitch fragments floating in the air around the subject.',
-            'Typography: ultra-bold uppercase (Anton, Bebas Neue), slightly tilted 5-8°. Combine an outer NEON glow in PRIMARY with a thick chunky outline in a contrasting color. Optional micro-glitch / chromatic aberration on edges.',
+            'Typography: ultra-bold uppercase, slightly tilted 5-8°. Pick from Druk Wide Super, Industry Inc Bold, Anton, Bebas Neue, Tungsten Bold, Bourton Stencil, Knockout 91 Ultmaht, Druk Text Wide Heavy, ITC Machine, or Acier BAT Solid Stencil. Combine an outer NEON glow in PRIMARY with a thick chunky outline in a contrasting color. Optional micro-glitch / chromatic aberration on edges.',
             'Tag/badge: pill or chevron shape with words like "LIVE", "EPIC", "INSANE", "WORLD RECORD", "VICTORY" — saturated red, gold, or PRIMARY color.',
             'Mood: high-octane, bombastic, slightly chaotic. Esports broadcast graphics. NO minimalism.',
         ],
@@ -292,7 +296,7 @@ const STYLE_PRESETS = {
             'Optional: a halftone dot pattern overlay or radial sunburst rays emanating from the subject for added energy.',
             'Subject: a person with VERY exaggerated facial expression — mouth open wide in shock/awe, eyes huge, hands up in surprise. Face fills 35-50% of one side of the frame.',
             'Lighting on subject: bright EVEN key light, almost flash-photography flat lighting. Almost no shadows. Slight glow halo around subject silhouette.',
-            'Typography: HUGE black bold uppercase (Anton, Impact) with a thick (10-14 px) yellow OR PRIMARY-color outline. 1-2 words per line maximum, words may stack vertically.',
+            'Typography: HUGE black bold uppercase. Pick from Druk XX Wide Super, Tungsten Black, Knockout 90 Sumo, Anton, Impact, Bourton Drop, Acier BAT Black Solid, Compacta Black, ITC Machine Bold, or Druk Wide Heavy. Apply a thick (10-14 px) yellow OR PRIMARY-color outline. 1-2 words per line maximum, words may stack vertically.',
             'Numbers/money/prizes if relevant: "$1,000,000", "DAY 100", "vs WORLD" — use big chunky numerals with neon outline and slight 3D extrusion.',
             'Optional graphics: a red curved arrow pointing at the subject, a comic-book BOOM/POW burst, falling money/confetti, an oversized 3D emoji floating beside the subject.',
             'Mood: HYPE, FOMO, must-click. Viewer should feel they will MISS something if they don\'t click. Zero subtlety, zero whitespace.',
@@ -304,7 +308,7 @@ const STYLE_PRESETS = {
             'BACKGROUND: refined and intentional. Use a subtle gradient driven by the SECONDARY color — could be deep midnight navy, charcoal, warm cream, or muted sage. Optional fine paper grain or canvas texture.',
             'Subject (person, object, illustration) shot in a controlled magazine-cover way — composed, intentional, never random. Strong directional lighting like a portrait photographer would use.',
             'Composition follows the print-magazine grid: generous whitespace, clear hierarchy, a single dominant element with breathing room.',
-            'Typography: a confident SERIF headline (Playfair Display, GT Super, Tiempos Headline) — this is the ONE style that allows serif. 1-2 words. Optional thin sans-serif kicker line ABOVE the headline ("ESSAY", "SPECIAL REPORT", "PROFILE").',
+            'Typography: a confident SERIF headline — this is the ONE style that allows serif. Pick from Playfair Display Black, GT Super Display Bold, Tiempos Headline Bold, Domaine Display Bold, Recoleta Bold, Editorial New Bold, Marfa Display Bold, Söhne Schmal Buch, Caslon Doric Display Bold, or Canela Bold. 1-2 words. Optional thin sans-serif kicker line ABOVE the headline ("ESSAY", "SPECIAL REPORT", "PROFILE") in JetBrains Mono or IBM Plex Mono.',
             'Color accents extremely sparing: a single horizontal hairline rule beneath the kicker, a small dot in PRIMARY color, or a thin colored band at the bottom of the frame. Never gaudy, never neon.',
             'Optional small cover-line in monospace ("VOL. 12", "ISSUE 04", a date) tucked in a corner.',
             'Mood: thoughtful, journalistic, premium. The viewer should sense quality and depth, like opening a high-end magazine.',
@@ -375,9 +379,46 @@ export function buildThumbnailPrompt({ title, subtitle, tag, style, color, color
     // most common reason image models silently fall back to landscape.
     prompt = `OUTPUT FORMAT — ABSOLUTE PRIORITY: ${fmt.label} ${fmt.ratio} (${fmt.dims} px). ${formatRule}\n\n` + prompt;
 
+    // Lead the prompt with the IDENTITY LOCK when reference photos are attached.
+    // Image models weight the FIRST tokens more heavily — putting identity preservation
+    // at the top makes the attached photo's face/identity the dominant signal,
+    // ahead of any style direction.
+    if (hasImages) {
+        const identityLockTop = [
+            '╔═══════════════════════════════════════════════════════════════════╗',
+            '║  PRIMARY DIRECTIVE — READ THIS FIRST · OVERRIDES EVERYTHING BELOW  ║',
+            '╚═══════════════════════════════════════════════════════════════════╝',
+            '',
+            'The reference photo(s) attached to this request are the FACE OF THE FINAL IMAGE.',
+            '',
+            'YOUR JOB: take the person/people from the attached photo(s) and place them inside a new thumbnail composition. The output is essentially a STYLED PORTRAIT of the same person — NOT a brand-new character that "vibes" with the photo.',
+            '',
+            'NON-NEGOTIABLE FACE PRESERVATION:',
+            '• Same face geometry, same eyes shape & color, same eyebrows, same nose, same mouth, same jawline.',
+            '• Same skin tone, same skin texture, same hair colour, same hair length, same haircut.',
+            '• Same age, same gender presentation, same body type.',
+            '• Same clothes (or close enough — same color family, same garment type) unless the user prompt explicitly asks to change them.',
+            '',
+            'WHAT YOU CAN CHANGE: the BACKGROUND, the LIGHTING ATMOSPHERE around the person, the surrounding props, the typography, the color grade of the scene. Adjust the expression slightly to match the topic\'s energy (a touch more surprise / focus / excitement) — never replace it.',
+            '',
+            'IF THE OUTPUT FACE DOES NOT MATCH THE INPUT PHOTO, THE GENERATION HAS FAILED.',
+            '',
+            'Everything below this line is secondary art-direction. When it conflicts with this PRIMARY DIRECTIVE, this directive wins.',
+            '─────────────────────────────────────────────────────────────────────',
+            '',
+        ].join('\n');
+        prompt = identityLockTop + prompt;
+    }
+
     // ── 2. Style direction ──
-    prompt += `VISUAL STYLE: ${preset.base}.\n`;
-    prompt += preset.details.join('\n') + '\n\n';
+    // When reference photos are attached, strip any "Subject (...)" line from the
+    // style preset — those describe a fictional ideal sujet that conflicts with
+    // the user's photo. The style should only dress the world AROUND the person.
+    const styleDetails = hasImages
+        ? preset.details.filter(line => !/^subject\b/i.test(line))
+        : preset.details;
+    prompt += `VISUAL STYLE (applies to background, atmosphere, props, typography, color grade — NOT to the person${hasImages ? ' from the reference photo' : ''}): ${preset.base}.\n`;
+    prompt += styleDetails.join('\n') + '\n\n';
 
     // ── 3. Content ──
     prompt += `CONTENT TO DISPLAY:\n`;
@@ -415,8 +456,8 @@ export function buildThumbnailPrompt({ title, subtitle, tag, style, color, color
             '• Reproduce each person EXACTLY as in the photo — identical face, eyes, hair, skin tone, clothing, body shape, age. Do NOT replace, alter, beautify, or stylize them. The viewer must recognize them at a glance.',
             '• Build the WHOLE composition around these people. The scene, background, lighting, and props must support and complement them — they are not pasted-in foreground decoration.',
             '• Place the main person on a rule-of-thirds line, occupying 30-50% of frame area, looking toward camera or toward the title text.',
-            '• Apply an exaggerated emotional expression matching the topic (surprise, shock, curiosity, excitement). Adjust facial pose if needed but PRESERVE the person\'s identity.',
-            '• Match the style\'s lighting on the subject (dramatic rim light for Bold/Tech/Gaming, soft diffused for Clean/Editorial, neon RGB for Gaming, flat bright for Hype, etc.).',
+            '• PRESERVE the pose and approximate expression from the photo. You may slightly adapt the expression to match the topic (more surprise / curiosity / excitement) but DO NOT invent a totally different pose, do NOT redirect the gaze, do NOT change the body angle.',
+            '• Match the style\'s lighting ATMOSPHERE on the scene around them (dramatic rim light for Bold/Tech/Gaming, soft diffused for Clean/Editorial, neon RGB for Gaming, flat bright for Hype, etc.) — but the person\'s skin tone, hair color, and key facial highlights must remain true to the photo.',
             '• Integrate seamlessly with the background — same color temperature, consistent shadow direction, realistic edge blending. NO obvious cutout halos.',
             '',
         ].join('\n');
@@ -425,7 +466,26 @@ export function buildThumbnailPrompt({ title, subtitle, tag, style, color, color
     }
 
     // ── 6. Final quality reminder ──
-    prompt += 'FINAL QUALITY CHECK: The thumbnail must look like it was designed by a professional graphic designer for a top-tier YouTube channel. It must be instantly eye-catching at any size, have perfect text readability, and make viewers want to click.';
+    prompt += 'FINAL QUALITY CHECK: The thumbnail must look like it was designed by a professional graphic designer for a top-tier YouTube channel. It must be instantly eye-catching at any size, have perfect text readability, and make viewers want to click.\n\n';
+
+    // ── 7. IDENTITY LOCK (highest priority — appended last so the model reads it last) ──
+    // When the user uploaded reference photos, this block OVERRIDES any earlier rule
+    // (including the style preset's "Subject (if a person)..." line) about how the
+    // person should look or pose. The photo wins.
+    if (hasImages) {
+        prompt += [
+            '═══════════════════════════════════════════════════════════════',
+            'IDENTITY LOCK — HIGHEST PRIORITY · OVERRIDES ALL EARLIER RULES:',
+            '═══════════════════════════════════════════════════════════════',
+            'The people in the attached reference photos are CANONICAL — non-negotiable.',
+            '• Their face geometry, eyes, eyebrows, nose, mouth, jawline, skin tone, hair color & cut, age, body shape, and clothing MUST match the photo exactly. Same person, recognizable at a glance.',
+            '• Their pose, body angle, and head tilt MUST stay close to the photo (you may make the expression slightly more emotional, nothing more).',
+            '• ANY earlier instruction about "Subject (if a person): dramatic three-quarter pose / specific lighting on the subject / specific expression / RGB rim lights on cheeks / etc." is OVERRIDDEN by this lock. Those rules describe the IDEAL when no photo is provided — they DO NOT apply to the people in the attached photos.',
+            '• The chosen visual STYLE applies to the BACKGROUND, the surrounding atmosphere, the typography, the props, the color grading — NOT to the person\'s face or body. Style adjusts the world AROUND them, never their identity.',
+            '• Final check: if I (the user) sent you a photo of myself in a hoodie, the output must show ME in that same hoodie with my face — not a generic stylized character that "feels like the style".',
+            '═══════════════════════════════════════════════════════════════',
+        ].join('\n');
+    }
 
     return prompt;
 }
