@@ -3,10 +3,11 @@ import ThumbnailCard from './ThumbnailCard';
 import PreviewPanel from './PreviewPanel';
 import './ResultsPanel.css';
 
-export default function ResultsPanel({ thumbnails, style, color, uploadedImages, mainTitle, previewIndex, setPreviewIndex, onCanvasReady }) {
+export default function ResultsPanel({ thumbnails, style, color, uploadedImages, screenshotImage, mainTitle, previewIndex, setPreviewIndex, onCanvasReady }) {
     // Get the selected thumbnail's image source for preview
     const selectedThumb = thumbnails.length > 0 ? thumbnails[previewIndex] || thumbnails[0] : null;
-    const previewSrc = selectedThumb?.aiImageUrl || selectedThumb?.canvasDataUrl || null;
+    // Prefer composited canvas (with photo/screenshot overlays) over raw AI image
+    const previewSrc = selectedThumb?.canvasDataUrl || selectedThumb?.aiImageUrl || null;
 
     return (
         <div className="results-panel">
@@ -22,11 +23,55 @@ export default function ResultsPanel({ thumbnails, style, color, uploadedImages,
 
             {thumbnails.length === 0 ? (
                 <div className="empty-state">
-                    <div className="empty-icon">
-                        <Sparkles size={56} strokeWidth={1} />
+                    <div className="empty-hero">
+                        <div className="empty-hero-icon">
+                            <Sparkles size={28} strokeWidth={1.5} />
+                        </div>
+                        <h2 className="empty-hero-title">Ton studio de miniatures IA</h2>
+                        <p className="empty-hero-sub">Entre un titre à gauche, choisis un style et génère jusqu'à 3 versions simultanément.</p>
                     </div>
-                    <div className="empty-label">
-                        Remplis le formulaire, ajoute tes images et génère plusieurs versions de ta thumbnail.
+
+                    <div className="empty-styles-preview">
+                        <div className="esp-card esp-bold">
+                            <div className="esp-lines" />
+                            <div className="esp-content">
+                                <div className="esp-bar" />
+                                <div className="esp-title">BOLD IMPACT</div>
+                                <div className="esp-desc">Sombre · Dramatique</div>
+                            </div>
+                        </div>
+                        <div className="esp-card esp-clean">
+                            <div className="esp-top" />
+                            <div className="esp-content esp-content-clean">
+                                <div className="esp-title esp-title-clean">Clean & Pro</div>
+                                <div className="esp-underline" />
+                                <div className="esp-desc esp-desc-clean">Épuré · Éditorial</div>
+                            </div>
+                        </div>
+                        <div className="esp-card esp-dark">
+                            <div className="esp-vignette" />
+                            <div className="esp-content">
+                                <div className="esp-neon-tag">— DARK —</div>
+                                <div className="esp-title esp-title-neon">CINEMA</div>
+                                <div className="esp-desc">Neon · Atmosphérique</div>
+                            </div>
+                        </div>
+                        <div className="esp-card esp-vibrant">
+                            <div className="esp-circle-big" />
+                            <div className="esp-circle-sm" />
+                            <div className="esp-content">
+                                <div className="esp-title">VIBRANT</div>
+                                <div className="esp-desc">Coloré · Énergique</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="empty-specs">
+                        <span>Format YouTube officiel</span>
+                        <span className="spec-dot">·</span>
+                        <span>1280 × 720 px</span>
+                        <span className="spec-dot">·</span>
+                        <span>PNG HD</span>
                     </div>
                 </div>
             ) : (
@@ -52,11 +97,13 @@ export default function ResultsPanel({ thumbnails, style, color, uploadedImages,
                                     style={style}
                                     color={color}
                                     uploadedImages={uploadedImages}
+                                    screenshotImage={screenshotImage}
                                     label={thumb.label}
                                     delay={i * 0.1}
                                     aiImageUrl={thumb.aiImageUrl}
                                     isAiGenerating={thumb.isAiGenerating}
                                     aiError={thumb.aiError}
+                                    photoUsedInGeneration={!!thumb.photoUsedInGeneration}
                                     onCanvasReady={(canvasDataUrl) => {
                                         onCanvasReady(i, canvasDataUrl);
                                     }}
