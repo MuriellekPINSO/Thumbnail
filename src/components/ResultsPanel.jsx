@@ -3,11 +3,9 @@ import ThumbnailCard from './ThumbnailCard';
 import PreviewPanel from './PreviewPanel';
 import './ResultsPanel.css';
 
-export default function ResultsPanel({ thumbnails, style, color, uploadedImages, screenshotImage, mainTitle, previewIndex, setPreviewIndex, onCanvasReady }) {
-    // Get the selected thumbnail's image source for preview
+export default function ResultsPanel({ thumbnails, mainTitle, previewIndex, setPreviewIndex }) {
     const selectedThumb = thumbnails.length > 0 ? thumbnails[previewIndex] || thumbnails[0] : null;
-    // Prefer composited canvas (with photo/screenshot overlays) over raw AI image
-    const previewSrc = selectedThumb?.canvasDataUrl || selectedThumb?.aiImageUrl || null;
+    const previewSrc = selectedThumb?.composedDataUrl || null;
 
     return (
         <div className="results-panel">
@@ -90,29 +88,19 @@ export default function ResultsPanel({ thumbnails, style, color, uploadedImages,
                                 )}
                                 <ThumbnailCard
                                     title={thumb.title}
-                                    subtitle={thumb.subtitle}
-                                    tag={thumb.tag}
-                                    variant={thumb.variant}
-                                    index={i}
-                                    style={style}
-                                    color={color}
-                                    uploadedImages={uploadedImages}
-                                    screenshotImage={screenshotImage}
                                     label={thumb.label}
                                     delay={i * 0.1}
-                                    aiImageUrl={thumb.aiImageUrl}
-                                    isAiGenerating={thumb.isAiGenerating}
-                                    aiError={thumb.aiError}
-                                    photoUsedInGeneration={!!thumb.photoUsedInGeneration}
-                                    onCanvasReady={(canvasDataUrl) => {
-                                        onCanvasReady(i, canvasDataUrl);
-                                    }}
+                                    composedDataUrl={thumb.composedDataUrl}
+                                    isGenerating={thumb.isGenerating}
+                                    stage={thumb.stage}
+                                    error={thumb.error}
+                                    hasPerson={thumb.hasPerson}
+                                    hasLogos={thumb.hasLogos}
                                 />
                             </div>
                         ))}
                     </div>
 
-                    {/* YouTube Preview Mockups */}
                     <PreviewPanel
                         thumbnailSrc={previewSrc}
                         title={mainTitle}

@@ -753,3 +753,82 @@ input[type="color"] {
         padding-bottom: 16px;
     }
 }
+
+/* ─── LOGO CHIPS (auto-detected companies) ────────────────────────────────── */
+
+.logo-chips {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed var(--border);
+}
+
+.logo-chips-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'Syne', sans-serif;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.6px;
+    color: var(--muted);
+    margin-bottom: 8px;
+}
+
+.logo-chips-spin {
+    animation: logo-spin 1s linear infinite;
+    margin-left: 4px;
+}
+
+@keyframes logo-spin {
+    to { transform: rotate(360deg); }
+}
+
+.logo-chips-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.logo-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 9px 4px 4px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 12px;
+    color: var(--text);
+}
+
+.logo-chip:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: var(--accent);
+}
+
+.logo-chip img {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #fff;
+    object-fit: contain;
+    padding: 2px;
+    flex-shrink: 0;
+}
+
+.logo-chip span {
+    font-weight: 600;
+    line-height: 1;
+}
+
+.logo-chip.disabled {
+    opacity: 0.4;
+    text-decoration: line-through;
+}
+
+.logo-chip.disabled img {
+    filter: grayscale(1);
+}

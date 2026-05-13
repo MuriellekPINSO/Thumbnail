@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { Image, Palette, Hash, AlignLeft, Tag, Wand2, MessageSquare, X, ChevronDown, Settings2, Type, Sparkles } from 'lucide-react';
+import { Image, Palette, Hash, AlignLeft, Tag, Wand2, MessageSquare, X, ChevronDown, Settings2, Type, Sparkles, Building2, Loader2 } from 'lucide-react';
 import DropZone from './DropZone';
 import ImagePreviews from './ImagePreviews';
 import './Sidebar.css';
@@ -120,6 +120,10 @@ export default function Sidebar({
     selectedCount, setSelectedCount,
     uploadedImages, setUploadedImages,
     referenceThumb, setReferenceThumb,
+    detectedCompanies = [],
+    disabledDomains = new Set(),
+    onToggleCompany,
+    isDetectingLogos = false,
     onGenerate,
     onComposeDirectly,
     isGenerating,
@@ -149,13 +153,41 @@ export default function Sidebar({
                 <input
                     type="text"
                     id="mainTitle"
-                    placeholder="Ex: Je gagne 10 000€ par mois..."
+                    placeholder="Ex: Anthropic X Twitter — le partenariat"
                     maxLength={60}
                     value={mainTitle}
                     onChange={(e) => setMainTitle(e.target.value)}
                     className="input-title"
                 />
                 <div className="char-count">{mainTitle.length}/60</div>
+
+                {/* Auto-detected companies → logos */}
+                {(isDetectingLogos || detectedCompanies.length > 0) && (
+                    <div className="logo-chips">
+                        <div className="logo-chips-label">
+                            <Building2 size={11} />
+                            <span>Logos détectés</span>
+                            {isDetectingLogos && <Loader2 size={11} className="logo-chips-spin" />}
+                        </div>
+                        <div className="logo-chips-list">
+                            {detectedCompanies.map((c) => {
+                                const disabled = disabledDomains.has(c.domain);
+                                return (
+                                    <button
+                                        key={c.domain}
+                                        className={`logo-chip ${disabled ? 'disabled' : ''}`}
+                                        onClick={() => onToggleCompany && onToggleCompany(c.domain)}
+                                        title={disabled ? 'Réactiver' : 'Désactiver'}
+                                    >
+                                        <img src={c.logo.src} alt={c.name} />
+                                        <span>{c.name}</span>
+                                        {disabled && <X size={10} />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                )}
             </div>
 
             {/* ── Style visuel ──────────────────────────────────────── */}

@@ -1,30 +1,34 @@
 const API_BASE = 'https://ai-gateway.vercel.sh/v1';
-const API_KEY = import.meta.env.VITE_GPT2_API_KEY;
+// Support both names for backward compatibility
+const API_KEY = import.meta.env.VITE_AI_GATEWAY_API_KEY || import.meta.env.VITE_GPT2_API_KEY;
 
-const MODEL = 'gpt-image-2';
-
+const IMAGE_MODEL = 'gpt-image-2';
+// Vercel AI Gateway uses provider/model prefix
+const TEXT_MODEL = 'openai/gpt-4o-mini';
 
 /**
- * Generate a thumbnail via Vercel AI Gateway (gpt-image-2).
+ * Generate a thumbnail BACKGROUND (no text, no person, no logos) via Vercel AI Gateway.
+ * The background is composited locally with text/person/logos on Canvas.
+ *
  * - No reference → POST /images/generations (JSON)
- * - With reference thumbnail → POST /images/edits (multipart, image as inspiration)
+ * - With reference thumbnail → POST /images/edits (multipart, used as compositional inspiration)
+ *
  * @param {string} prompt
- * @param {string|null} referenceDataUrl - data URL of a reference thumbnail
- * @returns {Promise<string>} - data URL of the generated image
+ * @param {string|null} referenceDataUrl - data URL of a reference thumbnail (inspiration only)
+ * @returns {Promise<string>} - data URL of the generated background image
  */
 export async function generateThumbnailImage(prompt, referenceDataUrl = null) {
     if (!API_KEY) {
-        throw new Error('Clé API manquante. Vérifiez VITE_GPT2_API_KEY dans votre fichier .env');
+        throw new Error('Clé API manquante. Vérifiez VITE_AI_GATEWAY_API_KEY dans votre fichier .env');
     }
 
     if (referenceDataUrl) {
-        // Use /images/edits with the reference thumbnail as compositional inspiration
         const res = await fetch(referenceDataUrl);
         const blob = await res.blob();
         const file = new File([blob], 'reference.png', { type: blob.type || 'image/png' });
 
         const formData = new FormData();
-        formData.append('model', MODEL);
+        formData.append('model', IMAGE_MODEL);
         formData.append('image[]', file);
         formData.append('prompt', prompt);
         formData.append('n', '1');
@@ -41,9 +45,10 @@ export async function generateThumbnailImage(prompt, referenceDataUrl = null) {
             const errorData = await response.json().catch(() => ({}));
             if (response.status === 401) throw new Error('Clé API invalide ou expirée');
             if (response.status === 429) throw new Error('Trop de requêtes. Réessayez dans quelques instants.');
-            // Fallback to standard generation if edits endpoint fails
-            console.warn('Edits endpoint failed, falling back to generations:', errorData);
-            return generateThumbnailImage(prompt, null);
+            // /edits failed — losing the reference is a meaningful UX regression,
+            // so we surface it as an error rather than silently degrading.
+            console.error('Edits endpoint failed (reference will be lost):', response.status, errorData);
+            throw new Error(errorData.error?.message || `Référence inutilisable (HTTP ${response.status}) — l'IA n'a pas pu lire le visuel d'inspiration.`);
         }
 
         const data = await response.json();
@@ -53,7 +58,6 @@ export async function generateThumbnailImage(prompt, referenceDataUrl = null) {
         return generateThumbnailImage(prompt, null);
     }
 
-    // Standard generation
     const response = await fetch(`${API_BASE}/images/generations`, {
         method: 'POST',
         headers: {
@@ -61,7 +65,7 @@ export async function generateThumbnailImage(prompt, referenceDataUrl = null) {
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-            model: MODEL,
+            model: IMAGE_MODEL,
             prompt,
             n: 1,
             size: '1536x1024',
@@ -85,182 +89,178 @@ export async function generateThumbnailImage(prompt, referenceDataUrl = null) {
     throw new Error('Aucune image générée dans la réponse.');
 }
 
+/**
+ * Text completion helper — used by logoFetch to parse companies from a title.
+ * @param {string} systemPrompt
+ * @param {string} userPrompt
+ * @returns {Promise<string>}
+ */
+export async function chatCompletion(systemPrompt, userPrompt) {
+    if (!API_KEY) throw new Error('Clé API manquante.');
+
+    const response = await fetch(`${API_BASE}/chat/completions`, {
+        method: 'POST',
+        headers: {
+            'Authorization': `Bearer ${API_KEY}`,
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            model: TEXT_MODEL,
+            messages: [
+                { role: 'system', content: systemPrompt },
+                { role: 'user', content: userPrompt },
+            ],
+            temperature: 0,
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error(`Erreur API texte (HTTP ${response.status})`);
+    }
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content ?? '';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
-// THUMBNAIL DESIGN SYSTEM PROMPT
-// Encodes YouTube thumbnail best practices so every generation is high quality.
-// Sources: YouTube Creator Academy, VidIQ, TubeBuddy, ThumbnailTest, ThumbsUp.tv
+// BACKGROUND-ONLY PROMPT SYSTEM
+// The AI generates ONLY the background scene (atmosphere, lighting, mood).
+// Text, person photos, and logos are composited locally on Canvas.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const THUMBNAIL_SYSTEM_RULES = [
-    // — FORMAT —
-    'Generate a YouTube thumbnail. The canvas is 1536×1024 but the VISIBLE SAFE ZONE is the center 1280×720 (16:9 ratio). Place ALL critical content (faces, text, key elements) within this central zone. Extend the background texture/color to the full 1536×1024. NEVER add letterboxing, black bars, borders, or margins.',
+const BACKGROUND_SYSTEM_RULES = [
+    'Generate a YouTube thumbnail BACKGROUND PLATE. Canvas: 1536×1024. The visible safe zone is the centered 1280×720 (16:9). Extend texture/color to full canvas. NEVER add letterboxing, borders, or margins.',
 
-    // — THE 2-SECOND RULE (MOST IMPORTANT) —
-    'A viewer scrolling YouTube has exactly 2 seconds to notice and click. The thumbnail must communicate ONE clear emotion or promise INSTANTLY. One dominant subject. One key message. Maximum 3 visual zones total. If it takes more than 2 seconds to understand, it fails.',
+    'CRITICAL — THIS IS A BACKGROUND ONLY. Do NOT draw any text, words, letters, numbers, captions, watermarks, or signatures anywhere. Zero typography. The image must contain NO readable characters of any kind.',
 
-    // — COMPOSITION —
-    'Rule of thirds: place the dominant subject on a vertical third (left or right), not dead center unless the layout says "centered". ONE clear focal point — either the face OR the text dominates, never both equally.',
-    'BOTTOM-RIGHT corner (last 120×40 px): ALWAYS leave empty — YouTube renders the video duration badge there and it will cover any content.',
-    'Safe margin: keep ALL text and face content at least 40 px from every edge.',
+    'CRITICAL — Do NOT include any people, faces, characters, mascots, logos, brand marks, icons, UI elements, or device frames. No human silhouettes. No photographic portraits. The scene should feel populated by light and atmosphere, not by subjects.',
 
-    // — TYPOGRAPHY: THE #1 FACTOR IN CLICK-THROUGH RATE —
-    'TEXT IS THE SINGLE MOST IMPORTANT ELEMENT. Maximum 4 words for the main title. Font: Impact, Bebas Neue, Montserrat ExtraBold 900, or Anton — ultra-heavy, ultra-bold, sans-serif ONLY. NEVER use light, thin, regular, serif, script, or decorative fonts.',
-    'Title minimum size: 25% of the frame height (180 px on a 720 px canvas). The text must remain fully legible when the thumbnail is displayed at 120×68 px (mobile small view).',
-    'NON-NEGOTIABLE TEXT CONTRAST: Every word must have EITHER (a) a solid black stroke/outline of minimum 5 px thickness around each letterform, OR (b) a solid filled rectangle/panel placed directly behind the text block. Text without a contrast mechanism is invisible on half of all backgrounds — it will kill click-through.',
-    'Text color rules: white or pure yellow (#FFE500) on dark backgrounds; pure black (#000000) on bright/light backgrounds. Zero compromise.',
+    'COMPOSITION FOR OVERLAY: The center-left third (approximately x=0..512 of the safe zone) MUST be relatively clean and uncluttered — this area will receive a person photo cutout. The center-right and right thirds should carry the primary visual interest (light, color, geometry, texture). Use the rule of thirds to push focal energy toward the right side.',
 
-    // — FACES & EMOTIONAL TRIGGER —
-    'If a person appears: face must fill 30–50% of the total frame. Expression must be EXAGGERATED and instantly readable — wide-open eyes, raised eyebrows, open mouth (shock/amazement), huge genuine smile (joy), or laser-focused intense stare (curiosity/determination). NEVER neutral, NEVER calm, NEVER subtle.',
-    'Lighting on faces: hard dramatic key light creating visible sharp shadows. Eyes must be bright, sharp, and in perfect focus. No motion blur, no overexposure. The face must look toward the camera or toward the text — never off-frame.',
+    'BOTTOM-RIGHT corner (last 120×40 px of the safe zone): keep DARKER and SIMPLER — YouTube renders the duration badge there.',
 
-    // — COLOR & CONTRAST —
-    'Use exactly 2–3 bold, highly saturated colors. Strong complementary pairs that create visual tension: electric blue + warm orange, blood red + cyan, neon yellow + deep purple, lime green + magenta. The thumbnail must visually pop when surrounded by 20 other thumbnails.',
-    'Background must contrast DRAMATICALLY with the subject: dark moody background for a bright subject; bright clean background for a dark subject. No camouflage — subject must instantly separate from background.',
-    'The user-provided accent color MUST appear prominently: as text color, text glow, badge fill, border highlight, or strong background accent. It should be the first color the eye notices after the face.',
-    'AVOID: pastels, muted/desaturated tones, grey palettes, washed-out colors, gradients with too many steps. Everything at maximum contrast and saturation.',
+    'COLOR: Use exactly 2–3 highly saturated, bold colors with strong contrast. The user-provided accent color MUST appear as a dominant visual element — as a light source, gradient stop, glow, or major color block. Avoid pastels, muted tones, greys, or washed-out palettes.',
 
-    // — QUALITY BENCHMARK —
-    'Reference tier: MrBeast (giant shocked face + 3-word Impact font + bright color blocks), MKBHD (perfect dark studio lighting + premium product), Veritasium (dramatic visual + bold question text). Your output must match or exceed this quality tier. Photorealistic, 4K-level rendering, professional color grading.',
+    'LIGHTING & DEPTH: Strong directional lighting with visible volumetric beams, atmospheric haze, or radial glow. Create dramatic depth: bright focal area + darker peripheral fall-off. The image must feel three-dimensional and cinematic.',
 
-    // — STRICT PROHIBITIONS —
-    'NEVER add: device frames, browser chrome, YouTube player UI, watermarks, mock video players, or any UI element.',
-    'NEVER: more than 5 words of text total, thin or decorative fonts, cluttered busy layouts with 4+ elements.',
-    'NEVER: place text or key faces in the bottom-right corner (timestamp zone). NEVER: stock photo look — it must feel custom-designed.',
+    'QUALITY: Photorealistic or premium-illustrated, 4K-level rendering, professional color grading. Reference quality tier: MrBeast backgrounds, Marvel poster backgrounds, Cyberpunk 2077 key art (minus the characters and text). The background alone must already feel click-worthy.',
+
+    'STRICTLY FORBIDDEN: any text or letters, any people or faces, any logos or brand marks, any UI / device frames / browser chrome, any watermarks, any borders or frames around the image.',
 ].join('\n');
 
 /**
- * Rich style presets with detailed visual direction for each aesthetic
+ * Background-only style presets — describe atmosphere, lighting, palette feel.
+ * Text and subjects are added later on Canvas, so styles only describe the backdrop.
  */
 const STYLE_PRESETS = {
     bold: {
-        base: 'BOLD IMPACT — cinematic dark drama with explosive energy',
+        base: 'BOLD IMPACT — cinematic dark drama, explosive atmospheric energy',
         details: [
-            'BACKGROUND: Near-black base (#050505 to #0f0f14 gradient). A single powerful key light source hits the subject from one side at 45°, creating sharp dramatic shadows across the other half. The unlit side bleeds into pure black.',
-            'ATMOSPHERE: One strong volumetric light beam (matching the accent color) cuts diagonally through the dark background — like a spotlight or laser. Optional: very subtle smoke/haze particles and a narrow lens flare at the light source.',
-            'TYPOGRAPHY: Impact or Bebas Neue, ALL-CAPS, sized at 28-32% of frame height. Tilted exactly 2° clockwise for dynamism. MANDATORY: 6px solid black stroke on every letterform PLUS a strong accent-color glow (blur 20px, opacity 60%) behind the text. White fill color.',
-            'ACCENT COLOR: Appears as (1) the volumetric light beam color, (2) the text glow, and (3) a thin 3px horizontal bar above or below the title block. These three uses only.',
-            'COMPOSITION: Subject fills the left or right third of frame (per layout instruction). Text stack occupies the opposite third. The middle third is mostly empty — do NOT clutter it.',
-            'MOOD BENCHMARK: Think WWE promo poster, Marvel movie title card, or MrBeast challenge thumbnail. Powerful, intense, high-stakes. The viewer must feel adrenaline.',
+            'BACKGROUND: Near-black base (#050505 to #0f0f14 deep gradient). One powerful key light source enters from the right at 45°, raking across the scene and creating sharp directional shadows. The left half falls into deep shadow — perfect dark zone for a person cutout overlay.',
+            'ATMOSPHERE: One strong volumetric light beam (in the accent color) cuts diagonally through the right portion of the frame — like a stage spotlight or laser. Subtle smoke/haze particles catch the light. A narrow lens flare at the beam origin.',
+            'TEXTURE: Faint geometric grid lines at 5% opacity across the dark areas — like blueprint paper or holographic display. Optional concrete or metallic micro-texture.',
+            'ACCENT COLOR USAGE: as (1) the volumetric beam, (2) a glow at the beam origin, (3) a thin vertical edge highlight at the far right of the frame.',
+            'MOOD BENCHMARK: WWE promo background, Marvel movie title card backdrop, MrBeast challenge thumbnail (minus the people and text). Powerful, intense, high-stakes.',
         ],
     },
     clean: {
-        base: 'CLEAN & PROFESSIONAL — editorial magazine quality with premium restraint',
+        base: 'CLEAN & PROFESSIONAL — editorial magazine quality, premium restraint',
         details: [
-            'BACKGROUND: Pure white (#FFFFFF) or very light warm grey (#F5F4F0). Even, soft diffused studio lighting — zero harsh shadows, perfect fill light. The background must feel like an expensive photo studio, not a home webcam setup.',
-            'SUBJECT: If a person — polished, confident, direct camera gaze. Like a TED speaker, Apple keynote presenter, or Forbes cover subject. Professional attire. Sharp focus, perfect exposure.',
-            'TYPOGRAPHY: Montserrat ExtraBold (900 weight) or similar geometric sans-serif. Bold and authoritative but not aggressive. MANDATORY: 2px dark (#1a1a1a) stroke on every letterform for crispness on light backgrounds. Text color: pure black (#0a0a0c) for maximum contrast on white.',
-            'ACCENT COLOR: Used with surgical precision — ONE of these, not all: a 4px horizontal underline bar under the title, a small pill-shaped badge label, or a single colored icon/arrow. Restraint is the point.',
-            'LAYOUT: Generous whitespace — at least 20% of the frame should be breathing room. Three-level visual hierarchy: (1) subject/face, (2) large bold title, (3) small accent detail.',
-            'MOOD BENCHMARK: Apple product page, Vox explainer, business magazine cover, MKBHD review thumbnail. Clean, premium, trustworthy. Confidence without aggression.',
+            'BACKGROUND: Pure white (#FFFFFF) or very light warm grey (#F5F4F0). Soft, even diffused studio lighting from above. Zero harsh shadows. The surface should feel like a high-end product photography backdrop.',
+            'SUBTLE DEPTH: A very soft radial gradient — slightly brighter in the upper-right, gently darker toward the lower edges. Maybe an extremely faint geometric pattern (dots or thin lines) at 3% opacity.',
+            'ACCENT COLOR USAGE: as a single dominant geometric shape — a large soft-edged color block, a wide diagonal band, or a horizontal stripe — occupying roughly the right third of the frame. Used with restraint, not splattered.',
+            'NEGATIVE SPACE: At least 50% of the frame is clean negative space. The composition should feel calm, premium, and confidence-inspiring.',
+            'MOOD BENCHMARK: Apple product page background, Vox explainer backdrop, business magazine cover. Clean, premium, trustworthy.',
         ],
     },
     dark: {
         base: 'DARK CINEMA — neon noir atmosphere with cinematic depth',
         details: [
-            'BACKGROUND: Near-black (#020208). Rich atmospheric haze fills the depth. Colored rim/edge lighting on the subject silhouette using the accent color — creating a glowing halo effect around the subject edges. Strong vignette at all four corners.',
-            'DEPTH & TEXTURE: Pronounced bokeh blur on any background elements. Fine film grain overlay at 15% opacity. Optional: chromatic aberration (color fringe) on bright edges. Subtle horizontal scanlines at 5% opacity for screen feel.',
-            'TYPOGRAPHY: ALL-CAPS with a neon glow effect — text appears to emit its own light. Use the accent color as the glow source (shadowBlur 30px) over white or very light grey letterforms. Add a subtle text reflection (30% opacity, flipped, fading out downward).',
-            'COLOR GRADING: Teal-orange complementary split toning (cool shadows, warm highlights). Deep crushed blacks — histogram pushed hard left. Reference palette: Blade Runner 2049, The Batman, Cyberpunk 2077 UI.',
-            'ACCENT COLOR: Used as (1) the rim light/halo on subject edges, (2) the text neon glow, and (3) a glowing horizontal separator line between title and subtitle.',
-            'MOOD BENCHMARK: High-budget thriller poster, sci-fi movie title screen, Linus Tech Tips dark-mode thumbnail. Mysterious, premium, cinematic. The viewer feels like they are about to discover something forbidden or powerful.',
+            'BACKGROUND: Near-black (#020208) with rich atmospheric haze filling the depth. Strong vignette at all four corners — the edges fade to pure black.',
+            'NEON LIGHTING: Multiple light sources in the accent color cast colored rim light and atmospheric glow. Volumetric god-rays cut through the haze. Optional: distant neon signs blurred deep in the bokeh, or faint colored reflections on a wet surface in the foreground.',
+            'COLOR GRADING: Teal-orange complementary split-toning (cool shadows, warm highlights). Deep crushed blacks. Fine film grain overlay at 12% opacity. Optional subtle chromatic aberration on bright edges.',
+            'ACCENT COLOR USAGE: as (1) the dominant neon glow source, (2) atmospheric god-rays through haze, (3) a glowing horizontal accent line cutting across the lower third of the frame.',
+            'MOOD BENCHMARK: Blade Runner 2049, The Batman, Cyberpunk 2077 key art backdrops. Mysterious, premium, cinematic. Feels like a forbidden discovery.',
         ],
     },
     vibrant: {
         base: 'VIBRANT POP — maximum saturation, explosive color energy',
         details: [
-            'BACKGROUND: Bold multi-stop gradient — two or three HIGHLY SATURATED colors (e.g., electric blue #0066FF to hot pink #FF0080, or lime #00FF66 to orange #FF6600). Colors must be pure, fully saturated, zero grey added. The gradient direction: diagonal from bottom-left to top-right.',
-            'GEOMETRIC ELEMENTS: 4-6 bold floating shapes — mix of: large circle (semi-transparent, 40% opacity), lightning bolt icon, star burst, thick arrow pointing toward the text. These are decorative but add energy and depth. Keep them behind the subject.',
-            'TYPOGRAPHY: Rounded extra-bold or playful ultra-bold (like Nunito ExtraBold, Poppins Black, or Fredoka One). Text slightly irregular — main word 20% larger than the rest. MANDATORY: 7px solid dark (#000000 or #1a1a1a) stroke on every letterform. Fill: white (#FFFFFF). Optional: a second color pop on one key word.',
-            'ENERGY ELEMENTS: Star bursts / sparkle emojis (★ ✦ ✨) at 3-4 positions around the composition. Speed/motion lines emanating from the subject. A bold "starburst" shape behind one key word for emphasis.',
-            'ACCENT COLOR: Used as the fill of 1-2 geometric shapes AND as the color of one key text word.',
-            'MOOD BENCHMARK: MrBeast challenge video, gaming channel highlight, entertainment/reaction content. Like a carnival ride poster crossed with a streetwear brand drop. Energy level must be 11/10 — the viewer must feel excited just looking at it.',
+            'BACKGROUND: Bold multi-stop diagonal gradient using 2–3 fully saturated, pure colors derived from the accent color and its complement (e.g., accent + a sharp contrasting hue). Zero grey, zero washed-out tones. Direction: bottom-left to top-right.',
+            'GEOMETRIC ENERGY: 4–6 large soft-edged geometric shapes floating in the background — semi-transparent circles, bold diagonals, abstract sunbursts, motion lines. They add dynamism without competing with future overlays.',
+            'TEXTURE: Optional fine halftone dot pattern or comic-book speed lines at 8% opacity in one quadrant. Subtle starburst sparkles (★) at 2–3 positions.',
+            'ACCENT COLOR USAGE: as the dominant gradient stop, the fill of 1–2 floating shapes, and the central radial glow source.',
+            'MOOD BENCHMARK: MrBeast challenge background, gaming highlight reel, streetwear brand drop poster. Energy 11/10 — pure visual adrenaline.',
         ],
     },
 };
 
 /**
- * Build a comprehensive, best-practice-enriched prompt for thumbnail generation.
+ * Build a background-only prompt for the AI image model.
  *
- * The resulting prompt includes:
- * 1. System rules (composition, typography, contrast, format)
- * 2. Style-specific visual direction
- * 3. User content (title, subtitle, tag)
- * 4. Color direction
- * 5. Reference image instructions (if any)
+ * The Canvas layer (text, person, logos) is composited locally — so the AI
+ * is instructed to leave the appropriate zones clean and not to draw any
+ * subject, text, or logo.
  *
  * @param {object} options
- * @param {string}  options.title     - Main title text
- * @param {string}  options.subtitle  - Secondary text / hook
- * @param {string}  options.tag       - Badge label (e.g. "NEW", "TUTO")
- * @param {string}  options.style     - One of: bold | clean | dark | vibrant
- * @param {string}  options.color     - Hex accent color
- * @param {boolean} [options.hasImages] - Whether user attached reference photos
- * @returns {string} Full prompt ready for the AI model
+ * @param {string}  options.style          - bold | clean | dark | vibrant
+ * @param {string}  options.color          - Hex accent color
+ * @param {boolean} [options.hasPerson]    - reserve left-third clean zone for person cutout
+ * @param {boolean} [options.hasLogos]     - reserve a clean zone for logo placement
+ * @param {boolean} [options.hasReference] - hint that a reference image was provided
+ * @returns {string} Full background-only prompt
  */
-export function buildThumbnailPrompt({ title, subtitle, tag, style, color, hasImages = false, hasReference = false }) {
+export function buildThumbnailPrompt({ style, color, hasPerson = false, hasLogos = false, hasReference = false }) {
     const preset = STYLE_PRESETS[style] || STYLE_PRESETS.bold;
 
-    // ── 1. System rules ──
-    let prompt = THUMBNAIL_SYSTEM_RULES + '\n\n';
+    let prompt = BACKGROUND_SYSTEM_RULES + '\n\n';
 
-    // ── 2. Style direction ──
-    prompt += `VISUAL STYLE: ${preset.base}.\n`;
-    prompt += preset.details.join('\n') + '\n\n';
-
-    // ── 3. Content ──
-    prompt += `CONTENT TO DISPLAY:\n`;
-    const wordCount = title.split(' ').filter(Boolean).length;
-    if (wordCount <= 5) {
-        prompt += `• Main title text — render EXACTLY this text, very large (25%+ of frame height): "${title}"\n`;
-    } else {
-        prompt += `• Main title text — the full title is "${title}". Since it exceeds 5 words, CONDENSE it to the 3-4 most impactful words that convey the core message. Render only the condensed version, very large.\n`;
-    }
-
-    if (subtitle) {
-        prompt += `• Subtitle / hook — smaller text below the title (about 40% the size of the title): "${subtitle}"\n`;
-    }
-
-    if (tag) {
-        prompt += `• Badge label — a small pill-shaped or rectangular label with bold text, placed in a corner or near the title: "${tag}"\n`;
-    }
-
-    prompt += '\n';
-
-    // ── 4. Color ──
-    prompt += `ACCENT COLOR: ${color} — use this as the primary highlight color for text glow, badges, borders, or background accents. Pair it with colors that create strong contrast.\n\n`;
-
-    // ── 5. Person photo (sent via edits endpoint) ──
-    if (hasImages) {
-        prompt += [
-            'PERSON PHOTO — THIS IS THE MOST CRITICAL INSTRUCTION:',
-            'A real photo of the actual person has been attached. This person MUST be the main subject of the thumbnail. ABSOLUTE RULES:',
-            '• Reproduce EXACTLY this person: same face structure, skin tone, hair color and style, and recognizable features. This is a real human being, not a fictional character.',
-            '• DO NOT replace or substitute them with any other person. If you cannot use this face, fail gracefully rather than inventing someone else.',
-            '• SIZE: The person must fill 35–55% of the total frame. They are the hero of this thumbnail.',
-            '• EXPRESSION: Transform their expression into an EXTREME YouTube reaction — mouth wide open in shock or amazement, eyebrows raised as high as possible, wide eyes conveying excitement or disbelief. This exaggerated expression is what makes people click.',
-            '• LIGHTING: Apply dramatic professional lighting that matches the style. Bold/Dark → hard key light creating sharp shadows, neon rim light on the edges. Clean → soft even studio light. Vibrant → bright energetic fill light.',
-            '• INTEGRATION: The person must look like they BELONG in the scene — not pasted in. Their lighting, shadows, and color grading must match the background.',
-            '• BODY LANGUAGE: Open posture, hands visible if possible, leaning slightly toward camera or text — body language that screams energy and excitement.',
-            '',
-        ].join('\n');
-    }
-
-    // ── 6. Reference thumbnail ──
+    // When the user provides a reference thumbnail, it BECOMES the primary
+    // visual directive. The style preset details are dropped (they would
+    // conflict with the reference). The accent color is still enforced, but
+    // adapted to the reference's color logic.
     if (hasReference) {
         prompt += [
-            'REFERENCE THUMBNAIL (CRITICAL — use as primary visual inspiration):',
-            'A reference YouTube thumbnail has been provided by the user. You MUST:',
-            '• Study its COMPOSITION: where subjects and text are placed, use of negative space, rule of thirds.',
-            '• Capture its COLOR ENERGY: the overall palette feel (saturated? dark? bright?), contrast level, dominant hues.',
-            '• Match its IMPACT LEVEL: if the reference is bold and intense, be bold and intense. If clean, be clean.',
-            '• ADAPT it entirely to the new title, style, and accent color — do not reproduce the reference literally.',
-            '• The viewer should feel the same "click impulse" as the reference, but for a completely different video.',
+            'PRIMARY DIRECTIVE — MATCH THE PROVIDED REFERENCE IMAGE:',
+            'A reference thumbnail has been attached. It defines the target visual language. Your output MUST replicate the following from the reference, faithfully and aggressively:',
+            '  1. COMPOSITION: where the light comes from, where the focal energy sits, the depth structure (foreground/midground/background), the shape of light/dark zones.',
+            '  2. COLOR PALETTE: the exact dominant hues, the saturation level, the color grading (warm/cool split-toning, contrast curve). If the reference is dark and moody, your output must be dark and moody. If it is bright and poppy, the same.',
+            '  3. TEXTURE & LIGHTING: grain, atmosphere/haze density, lens character, light harshness, glow intensity, any volumetric beams, any motion blur or directional streaks.',
+            '  4. GEOMETRY & ENERGY: any abstract shapes, gradient directions, diagonal flow, radial bursts, geometric patterns present in the reference.',
+            '',
+            'WHAT TO STRIP from the reference: any human faces, person silhouettes, readable text/letters/numbers, brand logos, UI/device frames. Replace each removed subject with abstract light/color/atmosphere in the SAME SCREEN POSITION (so the composition shape is preserved).',
+            '',
+            `ACCENT COLOR INTEGRATION: ${color} should appear in the output as the dominant accent — but blend it into the reference's color logic, do not override the reference's palette.`,
+            `STYLE HINT (secondary, only if compatible with the reference): ${preset.base}.`,
+            '',
+        ].join('\n');
+    } else {
+        prompt += `VISUAL STYLE: ${preset.base}.\n`;
+        prompt += preset.details.join('\n') + '\n\n';
+        prompt += `ACCENT COLOR: ${color} — this exact hex value must be the dominant accent throughout the background.\n\n`;
+    }
+
+    if (hasPerson) {
+        prompt += [
+            'OVERLAY ZONE — PERSON CUTOUT:',
+            'A photo of a person will be composited on top of the LEFT THIRD (x=0..425 of the safe zone) by the application. Therefore:',
+            '• Keep the left third visually QUIET — darker, less detailed, fewer competing elements.',
+            '• Concentrate visual energy (color, light, motion) in the CENTER and RIGHT thirds.',
+            '• Cast some directional rim light that would naturally illuminate a person standing on the left side.',
             '',
         ].join('\n');
     }
 
-    // ── 7. Final quality reminder ──
-    prompt += 'FINAL QUALITY CHECK: Apply the 2-second test — cover everything except the thumbnail and ask "what is this video about and does it make me want to click?" If the answer is not instant and yes, redesign. The thumbnail must look like it was designed by a senior creative director at a top YouTube channel. Perfect text readability at thumbnail size, maximum visual impact, undeniable click-worthy quality.';
+    if (hasLogos) {
+        prompt += [
+            'OVERLAY ZONE — LOGOS:',
+            'Company logos will be composited on top by the application. Therefore:',
+            '• Keep the upper-right or center area clean enough to host floating logo elements.',
+            '• Provide a subtle darker area or soft glow zone that would frame logos nicely.',
+            '',
+        ].join('\n');
+    }
+
+    prompt += 'FINAL CHECK: Verify the output contains ZERO text, ZERO people, ZERO logos. It must be a pure atmospheric background, ready to receive overlays. If you are about to draw any character, face, or brand mark, STOP and replace it with abstract light/color instead.';
 
     return prompt;
 }
